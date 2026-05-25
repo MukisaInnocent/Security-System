@@ -7,6 +7,9 @@ const getApiBase = () => {
     url = `${protocol}//${hostname}:3001`;
   }
   
+  // Strip trailing slash if present
+  url = url.replace(/\/$/, '');
+  
   // Ensure we append /api if it's not already there
   return url.endsWith('/api') ? url : `${url}/api`;
 };
