@@ -118,6 +118,7 @@ export class HrService {
         title: `Leave Request ${approved ? 'Approved' : 'Rejected'}`,
         message: `Your leave request from ${lr.startDate.toDateString()} to ${lr.endDate.toDateString()} has been ${approved ? 'approved' : 'rejected'}${!approved && rejectReason ? ': ' + rejectReason : ''}.`,
         type: approved ? 'INFO' : 'WARNING',
+        link: `/hr/leave?id=${lr.id}`,
       },
     });
 

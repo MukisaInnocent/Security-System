@@ -2,13 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
+import { useSearchParams } from 'next/navigation';
 import { Package, Truck, ShoppingCart, CheckCircle2, Clock, AlertCircle, Loader2, Plus, Search, Filter } from 'lucide-react';
 
 export default function ProcurementPage() {
+  const searchParams = useSearchParams();
+  const deepLinkId = searchParams.get('id');
   const [requests, setRequests] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'REQUESTS' | 'SUPPLIERS' | 'ORDERS'>('REQUESTS');
+  const [activeTab, setActiveTab] = useState<'REQUESTS' | 'SUPPLIERS' | 'ORDERS'>(
+    deepLinkId ? 'REQUESTS' : 'REQUESTS' 
+  );
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -77,7 +82,8 @@ export default function ProcurementPage() {
         {loading ? (
           <div className="flex-center" style={{ padding: '3rem' }}><Loader2 className="animate-spin text-muted" /></div>
         ) : activeTab === 'REQUESTS' ? (
-          <table className="table">
+          <div className="table-container">
+<table className="table">
             <thead>
               <tr>
                 <th>Request ID</th>
@@ -91,7 +97,7 @@ export default function ProcurementPage() {
             </thead>
             <tbody>
               {requests.map(req => (
-                <tr key={req.id}>
+                <tr key={req.id} style={req.id === deepLinkId ? { backgroundColor: 'rgba(99,102,241,0.1)', outline: '2px solid var(--accent)' } : {}}>
                   <td className="font-mono text-xs fw-600">REQ-{req.id.substring(0, 8)}</td>
                   <td>
                     <span className={`badge ${req.priority === 'URGENT' ? 'badge-danger' : req.priority === 'HIGH' ? 'badge-warning' : 'badge-info'}`}>
@@ -115,8 +121,10 @@ export default function ProcurementPage() {
               )}
             </tbody>
           </table>
+</div>
         ) : activeTab === 'SUPPLIERS' ? (
-          <table className="table">
+          <div className="table-container">
+<table className="table">
             <thead>
               <tr>
                 <th>Supplier Name</th>
@@ -158,6 +166,7 @@ export default function ProcurementPage() {
               )}
             </tbody>
           </table>
+</div>
         ) : (
           <div className="empty-state" style={{ padding: '3rem' }}>
             <div className="empty-state-icon"><Truck size={48} opacity={0.2} /></div>

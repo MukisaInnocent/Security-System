@@ -1,5 +1,11 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-
+const getApiBase = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location;
+    return `${protocol}//${hostname}:3001/api`;
+  }
+  return 'http://localhost:3001/api';
+};
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;
 }
@@ -27,7 +33,7 @@ class ApiClient {
     };
     if (!(fetchOptions.body instanceof FormData)) headers['Content-Type'] = 'application/json';
     if (!skipAuth) { const token = this.getToken(); if (token) headers['Authorization'] = `Bearer ${token}`; }
-    const response = await fetch(`${API_BASE}${endpoint}`, { ...fetchOptions, headers });
+    const response = await fetch(`${getApiBase()}${endpoint}`, { ...fetchOptions, headers });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: response.statusText }));
       throw new Error(error.message || 'API Error');
@@ -244,6 +250,45 @@ class ApiClient {
   getChatContacts = async () => { return this.fetch('/chat/contacts'); }
   getContextualChat = async (type: string, id: string) => { return this.fetch(`/chat/context/${type}/${id}`); }
   sendBroadcast = async (data: any) => { return this.fetch('/chat/broadcast', { method: 'POST', body: JSON.stringify(data) }); }
+
+  // === REPORTS (JRS BRAP) ===
+  async generateDailyReport(data?: { date?: string; siteId?: string; regionId?: string }) { return this.fetch('/reports/generate-daily', { method: 'POST', body: JSON.stringify(data || {}) }); }
+  async generateNightShiftReport(data?: { date?: string }) { return this.fetch('/reports/generate-night-shift', { method: 'POST', body: JSON.stringify(data || {}) }); }
+  async getReportCoverage(date?: string, siteId?: string) {
+    const params = new URLSearchParams();
+    if (date) params.set('date', date);
+    if (siteId) params.set('siteId', siteId);
+    return this.fetch(`/reports/coverage?${params}`);
+  }
+  async getCallCard(date?: string) { return this.fetch(`/reports/call-card${date ? `?date=${date}` : ''}`); }
+  async getAbsentGuards(date?: string) { return this.fetch(`/reports/absent-guards${date ? `?date=${date}` : ''}`); }
+  async sendReport(reportId: string, recipientIds: string[]) { return this.fetch(`/reports/${reportId}/send`, { method: 'POST', body: JSON.stringify({ recipientIds }) }); }
+  async getReports(type?: string) { return this.fetch(`/reports${type ? `?type=${type}` : ''}`); }
+  async getReportById(id: string) { return this.fetch(`/reports/${id}`); }
+
+  // === CHANGE SHEETS (URSB BRAP) ===
+  async createChangeSheet(data: any) { return this.fetch('/change-sheets', { method: 'POST', body: JSON.stringify(data) }); }
+  async getChangeSheets(guardId?: string, status?: string, changeType?: string) {
+    const params = new URLSearchParams();
+    if (guardId) params.set('guardId', guardId);
+    if (status) params.set('status', status);
+    if (changeType) params.set('changeType', changeType);
+    return this.fetch(`/change-sheets?${params}`);
+  }
+  async getChangeSheet(id: string) { return this.fetch(`/change-sheets/${id}`); }
+  async approveChangeSheet(id: string, approved: boolean) { return this.fetch(`/change-sheets/${id}/approve`, { method: 'PATCH', body: JSON.stringify({ approved }) }); }
+
+  // === PERSONNEL MOVEMENTS (URSB BRAP) ===
+  async createPersonnelMovement(data: any) { return this.fetch('/personnel-movements', { method: 'POST', body: JSON.stringify(data) }); }
+  async getPersonnelMovements(guardId?: string, status?: string, type?: string) {
+    const params = new URLSearchParams();
+    if (guardId) params.set('guardId', guardId);
+    if (status) params.set('status', status);
+    if (type) params.set('type', type);
+    return this.fetch(`/personnel-movements?${params}`);
+  }
+  async approvePersonnelMovement(id: string, approved: boolean) { return this.fetch(`/personnel-movements/${id}/approve`, { method: 'PATCH', body: JSON.stringify({ approved }) }); }
+  async completePersonnelMovement(id: string) { return this.fetch(`/personnel-movements/${id}/complete`, { method: 'PATCH' }); }
 }
 
 export const api = new ApiClient();

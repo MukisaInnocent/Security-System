@@ -1,8 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { JwtModule } from '@nestjs/jwt';
+import { TenantMiddleware } from './common/tenant/tenant.middleware';
 import { UsersModule } from './users/users.module';
 import { SitesModule } from './sites/sites.module';
 import { DeploymentsModule } from './deployments/deployments.module';
@@ -23,6 +25,9 @@ import { PayrollModule } from './payroll/payroll.module';
 import { SpotCheckModule } from './spot-check/spot-check.module';
 import { FoodSupplierModule } from './food-supplier/food-supplier.module';
 import { ChatModule } from './chat/chat.module';
+import { ReportsModule } from './reports/reports.module';
+import { ChangeSheetsModule } from './change-sheets/change-sheets.module';
+import { PersonnelMovementsModule } from './personnel-movements/personnel-movements.module';
 
 @Module({
   imports: [
@@ -30,6 +35,7 @@ import { ChatModule } from './chat/chat.module';
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
+    JwtModule.register({}),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -52,6 +58,13 @@ import { ChatModule } from './chat/chat.module';
     SpotCheckModule,
     FoodSupplierModule,
     ChatModule,
+    ReportsModule,
+    ChangeSheetsModule,
+    PersonnelMovementsModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(TenantMiddleware).forRoutes('*');
+  }
+}

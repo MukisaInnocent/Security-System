@@ -115,6 +115,7 @@ export class FoodSupplierService {
             title: 'Meal Verification Rejected',
             message: `An unauthorised person attempted to collect a meal at ${session.siteId}. Biometric verification failed.`,
             type: 'WARNING',
+            link: '/supervisor',
           },
         });
       }
@@ -141,6 +142,7 @@ export class FoodSupplierService {
           title: 'Meal Delivery Complete',
           message: `Meal service at site ${session.siteId}: ${session.totalMealsVerified} meals served. Total cost: UGX ${session.totalMealCost.toLocaleString()}.`,
           type: 'INFO',
+          link: '/finance',
         },
       });
     }

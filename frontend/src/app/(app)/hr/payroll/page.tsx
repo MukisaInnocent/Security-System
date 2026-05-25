@@ -100,7 +100,8 @@ export default function PayrollPage() {
         {loading ? (
           <div className="flex-center" style={{ padding: '3rem' }}><Loader2 className="animate-spin text-muted" /></div>
         ) : (
-          <table className="table">
+          <div className="table-container">
+<table className="table">
             <thead>
               <tr>
                 <th>Guard Name</th>
@@ -155,6 +156,7 @@ export default function PayrollPage() {
               )}
             </tbody>
           </table>
+</div>
         )}
       </div>
     </div>

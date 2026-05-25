@@ -6,13 +6,18 @@ import { setupOnlineSync } from '@/lib/sync';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Register service worker
+    // Register service worker (only in production to avoid dev cache issues)
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').then((reg) => {
-        console.log('✅ Service Worker registered');
+      if (process.env.NODE_ENV === 'development') {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) { registration.unregister(); }
+        });
+      } else {
+        navigator.serviceWorker.register('/sw.js').then((reg) => {
+          console.log('✅ Service Worker registered');
 
-        // Register for background sync
-        if ('sync' in reg) {
+          // Register for background sync
+          if ('sync' in reg) {
           (reg as any).sync.register('sync-attendance').catch(() => {});
           (reg as any).sync.register('sync-incidents').catch(() => {});
         }
@@ -20,6 +25,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         console.log('Service Worker registration failed:', err);
       });
     }
+  }
 
     // Setup online/offline sync
     setupOnlineSync();

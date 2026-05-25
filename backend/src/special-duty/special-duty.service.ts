@@ -68,6 +68,7 @@ export class SpecialDutyService {
           title: `Special Duty Assignment: ${duty.title}`,
           message: `You have been selected for "${duty.title}" on ${dutyDate.toDateString()} at ${duty.location}. Payment: UGX ${duty.paymentPerPerson.toLocaleString()}. Please confirm or decline.`,
           type: 'INFO',
+          link: `/guard?dutyId=${duty.id}`,
         },
       });
     }
@@ -125,6 +126,7 @@ export class SpecialDutyService {
           title: `Special Duty Payment Required: ${duty.title}`,
           message: `Special duty "${duty.title}" completed. ${attended.length} personnel attended. Total payment due: UGX ${totalLiability.toLocaleString()}.`,
           type: 'ALERT',
+          link: `/finance/special-duty?id=${duty.id}`,
         },
       });
     }
@@ -143,6 +145,7 @@ export class SpecialDutyService {
           title: `Special Duty Cancelled: ${duty.title}`,
           message: `The special duty assignment "${duty.title}" on ${duty.date.toDateString()} has been cancelled. Reason: ${reason}`,
           type: 'WARNING',
+          link: `/guard?dutyId=${duty.id}`,
         },
       });
     }

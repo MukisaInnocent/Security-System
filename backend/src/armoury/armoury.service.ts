@@ -84,6 +84,7 @@ export class ArmouryService {
           title: 'Ammunition Discrepancy',
           message: `Weapon ${issuance.weapon.serialNumber}: ${issuance.roundsIssued} rounds issued, ${data.roundsReturned} returned. Discrepancy of ${issuance.roundsIssued - data.roundsReturned} rounds.`,
           type: 'ALERT',
+          link: '/armoury',
         },
       });
     }

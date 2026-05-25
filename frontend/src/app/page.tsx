@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
-import { Shield, Mail, Lock, ArrowRight, LoaderCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, LoaderCircle } from 'lucide-react';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const { login, user, loading } = useAuth();
@@ -33,11 +34,15 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('--- Login Submitted! ---', email, password);
     setError('');
     setIsLoading(true);
     try {
+      console.log('Calling api.login...');
       await login(email, password);
+      console.log('api.login succeeded!');
     } catch (err: any) {
+      console.error('Login error caught:', err);
       setError(err.message || 'Login failed');
     } finally {
       setIsLoading(false);
@@ -62,29 +67,44 @@ export default function LoginPage() {
       {/* Background glow effects */}
       <div style={{
         position: 'absolute', top: '-20%', right: '-10%', width: '500px', height: '500px',
-        background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(30,64,175,0.12) 0%, transparent 70%)',
         borderRadius: '50%', pointerEvents: 'none',
       }} />
       <div style={{
         position: 'absolute', bottom: '-20%', left: '-10%', width: '400px', height: '400px',
-        background: 'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(234,88,12,0.08) 0%, transparent 70%)',
         borderRadius: '50%', pointerEvents: 'none',
       }} />
 
       <div className="animate-fade-in" style={{ width: '100%', maxWidth: '420px', position: 'relative', zIndex: 1 }}>
-        {/* Brand */}
+        {/* Brand — wedeployed logo */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div className="animate-float" style={{
-            width: '72px', height: '72px', background: 'var(--accent-gradient)', borderRadius: '18px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem',
-            boxShadow: '0 8px 30px var(--accent-glow)',
-          }}><Shield size={34} color="white" strokeWidth={1.5} /></div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
-            <span className="gradient-text">SecureGuard</span>{' '}
-            <span style={{ color: 'var(--text-primary)' }}>Pro</span>
+            width: '120px', height: '120px', margin: '0 auto 1rem',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <img
+              src="/logo.jpg"
+              alt="wedeployed"
+              width={120}
+              height={120}
+              style={{ borderRadius: '18px', objectFit: 'contain', filter: 'drop-shadow(0 8px 30px rgba(30,64,175,0.3))' }}
+            />
+          </div>
+          <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.03em', marginTop: '0.5rem' }}>
+            <span style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>we</span>
+            <span style={{ background: 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>deployed</span>
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem', fontWeight: 500 }}>
-            Enterprise Security Management Platform
+          <div style={{
+            width: '80px', height: '3px', margin: '0.5rem auto 0',
+            background: 'linear-gradient(90deg, #f97316, #ea580c)',
+            borderRadius: '3px',
+          }} />
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.75rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            Digital Deployment &amp; Business Management
+          </p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.65rem', marginTop: '0.25rem', fontWeight: 500, opacity: 0.7 }}>
+            DDBMS v1.1.4
           </p>
         </div>
 
@@ -123,8 +143,14 @@ export default function LoginPage() {
               />
             </div>
 
-            <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}
-              style={{ width: '100%', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+            <button type="submit" className="btn btn-lg" disabled={isLoading}
+              style={{
+                width: '100%', fontSize: '1rem', fontWeight: 700, display: 'flex',
+                alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                background: 'linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%)',
+                color: 'white', boxShadow: '0 4px 20px rgba(30,64,175,0.3)',
+                border: 'none', cursor: 'pointer',
+              }}>
               {isLoading ? (
                 <><LoaderCircle size={18} style={{ animation: 'spin 1s linear infinite' }} /> Signing in...</>
               ) : (

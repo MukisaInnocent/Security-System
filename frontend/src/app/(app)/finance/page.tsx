@@ -2,13 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
+import { useSearchParams } from 'next/navigation';
 import { BadgeDollarSign, FileCheck, FileText, Plus, Search, Loader2, CheckCircle2, AlertCircle, TrendingUp, Wallet } from 'lucide-react';
 
 export default function FinancePage() {
+  const searchParams = useSearchParams();
+  const deepLinkInvoiceId = searchParams.get('invoiceId');
+  const deepLinkId = searchParams.get('id'); // Can be contract or special duty link id
+  const deepLinkType = searchParams.get('type');
+  
   const [contracts, setContracts] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'CONTRACTS' | 'INVOICES'>('CONTRACTS');
+  const [activeTab, setActiveTab] = useState<'CONTRACTS' | 'INVOICES'>(
+    deepLinkInvoiceId || deepLinkType === 'special-duty' ? 'INVOICES' : 'CONTRACTS'
+  );
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
@@ -92,7 +100,8 @@ export default function FinancePage() {
         {loading ? (
           <div className="flex-center" style={{ padding: '3rem' }}><Loader2 className="animate-spin text-muted" /></div>
         ) : activeTab === 'CONTRACTS' ? (
-          <table className="table">
+          <div className="table-container">
+<table className="table">
             <thead>
               <tr>
                 <th>Client Name</th>
@@ -106,7 +115,7 @@ export default function FinancePage() {
             </thead>
             <tbody>
               {contracts.map(c => (
-                <tr key={c.id}>
+                <tr key={c.id} style={c.id === deepLinkId ? { backgroundColor: 'rgba(99,102,241,0.1)', outline: '2px solid var(--accent)' } : {}}>
                   <td className="fw-700">{c.clientName}</td>
                   <td className="font-mono text-xs">{c.id.substring(0, 8)}</td>
                   <td className="font-mono">UGX {c.billingRatePerDay?.toLocaleString()}</td>
@@ -125,8 +134,10 @@ export default function FinancePage() {
               )}
             </tbody>
           </table>
+</div>
         ) : (
-          <table className="table">
+          <div className="table-container">
+<table className="table">
             <thead>
               <tr>
                 <th>Invoice #</th>
@@ -140,7 +151,7 @@ export default function FinancePage() {
             </thead>
             <tbody>
               {invoices.map(i => (
-                <tr key={i.id}>
+                <tr key={i.id} style={i.id === deepLinkId || i.id === deepLinkInvoiceId ? { backgroundColor: 'rgba(99,102,241,0.1)', outline: '2px solid var(--accent)' } : {}}>
                   <td className="font-mono fw-700">INV-{i.invoiceNumber}</td>
                   <td>{i.clientName}</td>
                   <td className="text-sm">{new Date(i.billingPeriodStart).toLocaleDateString()} - {new Date(i.billingPeriodEnd).toLocaleDateString()}</td>
@@ -157,6 +168,7 @@ export default function FinancePage() {
               )}
             </tbody>
           </table>
+</div>
         )}
       </div>
 

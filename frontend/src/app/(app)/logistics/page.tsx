@@ -91,7 +91,8 @@ export default function LogisticsPage() {
         {loading ? (
           <div className="flex-center" style={{ padding: '3rem' }}><Loader2 className="animate-spin text-muted" /></div>
         ) : (
-          <table className="table">
+          <div className="table-container">
+<table className="table">
             <thead>
               <tr>
                 <th>Asset Type</th>
@@ -127,6 +128,7 @@ export default function LogisticsPage() {
               )}
             </tbody>
           </table>
+</div>
         )}
       </div>
 

@@ -60,7 +60,8 @@ export default function HRGuardsPage() {
         {loading ? (
           <div className="flex-center" style={{ padding: '3rem' }}><Loader2 className="animate-spin text-muted" /></div>
         ) : (
-          <table className="table">
+          <div className="table-container">
+<table className="table">
             <thead>
               <tr>
                 <th>Staff ID</th>
@@ -108,6 +109,7 @@ export default function HRGuardsPage() {
               })}
             </tbody>
           </table>
+</div>
         )}
       </div>
     </div>

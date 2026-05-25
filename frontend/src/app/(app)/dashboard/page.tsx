@@ -144,12 +144,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Activity Tables */}
+      {/* Recent Activity — switches from 2-col grid to stacked on mobile */}
       <div className="grid-2">
         <div>
-          <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <h2 className="section-title">
             <ClipboardList size={16} color="var(--accent-light)" /> Recent Attendance
           </h2>
+          {/* Mobile: card view with data-labels | Desktop: table */}
           <div className="table-container">
             <table>
               <thead>
@@ -158,9 +159,9 @@ export default function DashboardPage() {
               <tbody>
                 {stats.recentAttendance.map((a: any) => (
                   <tr key={a.id}>
-                    <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{a.guard?.name}</td>
-                    <td>{a.site?.name}</td>
-                    <td>
+                    <td data-label="Guard" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{a.guard?.name}</td>
+                    <td data-label="Site">{a.site?.name}</td>
+                    <td data-label="Type">
                       <span className={a.type === 'CHECK_IN' ? 'badge badge-success' : 'badge badge-info'}>
                         {a.type === 'CHECK_IN' ? (
                           <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}><TrendingUp size={11} /> In</span>
@@ -169,13 +170,10 @@ export default function DashboardPage() {
                         )}
                       </span>
                     </td>
-                    <td style={{ fontSize: '0.75rem' }}>{new Date(a.timestamp).toLocaleTimeString()}</td>
-                    <td>
+                    <td data-label="Time" style={{ fontSize: '0.75rem' }}>{new Date(a.timestamp).toLocaleTimeString()}</td>
+                    <td data-label="GPS">
                       <span className={a.isWithinGeofence ? 'badge badge-success' : 'badge badge-danger'}>
-                        {a.isWithinGeofence
-                          ? <CheckCircle2 size={12} />
-                          : <Minus size={12} />
-                        }
+                        {a.isWithinGeofence ? <CheckCircle2 size={12} /> : <Minus size={12} />}
                       </span>
                     </td>
                   </tr>
@@ -189,7 +187,7 @@ export default function DashboardPage() {
         </div>
 
         <div>
-          <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <h2 className="section-title">
             <TriangleAlert size={16} color="var(--warning)" /> Recent Incidents
           </h2>
           <div className="table-container">
@@ -200,10 +198,10 @@ export default function DashboardPage() {
               <tbody>
                 {stats.recentIncidents.map((i: any) => (
                   <tr key={i.id}>
-                    <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{i.reportedBy?.name}</td>
-                    <td>{i.site?.name}</td>
-                    <td><SeverityBadge s={i.severity} /></td>
-                    <td style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <td data-label="Reporter" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{i.reportedBy?.name}</td>
+                    <td data-label="Site">{i.site?.name}</td>
+                    <td data-label="Severity"><SeverityBadge s={i.severity} /></td>
+                    <td data-label="Description" style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {i.description}
                     </td>
                   </tr>

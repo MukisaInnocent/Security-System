@@ -71,6 +71,7 @@ export class SpotCheckService {
             title: 'Spot Check FAILED',
             message: `Spot check FAILED for guard ${spotCheck.guard.name} at post ${spotCheck.deployment?.post?.name || 'Unknown'}. Verified by ${spotCheck.performedBy.name}.`,
             type: 'ALERT',
+            link: `/admin/spot-check?id=${spotCheck.id}`,
           },
         });
       }
@@ -106,6 +107,7 @@ export class SpotCheckService {
           title: `Guard Charge Raised: ${charge.guard.name}`,
           message: `A ${data.severityLevel} charge of "${data.chargeCategory}" has been raised against ${charge.guard.name}.`,
           type: 'ALERT',
+          link: `/admin/spot-check?chargeId=${charge.id}`,
         },
       });
     }
@@ -116,6 +118,7 @@ export class SpotCheckService {
         title: 'Formal Charge Raised Against You',
         message: `A ${data.severityLevel} charge has been raised: ${data.chargeDescription}. Please contact HR.`,
         type: 'ALERT',
+        link: '/guard?tab=charges',
       },
     });
 
@@ -161,7 +164,10 @@ export class SpotCheckService {
   }
 
   async approveVoid(voidId: string, approverId: string, approved: boolean, decisionNote?: string) {
-    const voidReq = await this.prisma.deploymentVoid.findUnique({ where: { id: voidId } });
+    const voidReq = await this.prisma.deploymentVoid.findUnique({
+      where: { id: voidId },
+      include: { deployment: { select: { guardId: true } } },
+    });
     if (!voidReq) throw new NotFoundException('Void request not found');
 
     await this.prisma.deploymentVoid.update({
@@ -181,6 +187,7 @@ export class SpotCheckService {
             title: 'Ghost Deployment Voided — Disciplinary Action Required',
             message: `A deployment has been voided as a ghost deployment. Please initiate disciplinary proceedings.`,
             type: 'ALERT',
+            link: `/hr/guards?id=${voidReq.deployment.guardId}`,
           },
         });
       }

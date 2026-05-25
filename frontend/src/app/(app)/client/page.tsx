@@ -273,7 +273,8 @@ export default function ClientPage() {
           </div>
           <div className="table-container card">
             <h3 className="text-sm fw-700 mb-3 px-2">Recent Invoices</h3>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="table-container">
+<table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ textAlign: 'left', fontSize: '0.75rem', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
                   <th style={{ padding: '0.75rem' }}>Invoice #</th>
@@ -305,6 +306,7 @@ export default function ClientPage() {
                 )}
               </tbody>
             </table>
+</div>
           </div>
           <button className="btn btn-outline mt-4 w-full flex items-center justify-center gap-2">
             <FileText size={16} /> Download Service Agreement PDF

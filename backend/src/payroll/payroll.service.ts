@@ -114,10 +114,23 @@ export class PayrollService {
   async approvePayroll(id: string, approverId: string) {
     const record = await this.prisma.payrollRecord.findUnique({ where: { id } });
     if (!record) throw new NotFoundException('Payroll record not found');
-    return this.prisma.payrollRecord.update({
+    const updated = await this.prisma.payrollRecord.update({
       where: { id },
       data: { status: 'APPROVED', approvedById: approverId, approvedAt: new Date(), lockedAt: new Date() },
     });
+
+    // Notify the guard
+    await this.prisma.notification.create({
+      data: {
+        userId: record.guardId,
+        title: 'Payroll Approved',
+        message: `Your payroll for ${record.payrollMonth}/${record.payrollYear} has been approved and locked.`,
+        type: 'INFO',
+        link: `/guard?tab=payroll&month=${record.payrollMonth}&year=${record.payrollYear}`,
+      },
+    });
+
+    return updated;
   }
 
   async getCurrentMonthSummary(guardId: string) {

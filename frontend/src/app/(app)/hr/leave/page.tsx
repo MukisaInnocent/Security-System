@@ -2,17 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
+import { useSearchParams } from 'next/navigation';
 import { CalendarDays, CheckCircle2, XCircle, Clock, AlertCircle, Loader2, Search, Filter } from 'lucide-react';
 
 export default function HRLeavePage() {
+  const searchParams = useSearchParams();
+  const deepLinkId = searchParams.get('id');
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('PENDING');
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadRequests();
-  }, [statusFilter]);
+    // If we have a deep link, switch filter to ALL to ensure the record is visible
+    if (deepLinkId) setStatusFilter('ALL');
+    else loadRequests();
+  }, [statusFilter, deepLinkId]);
 
   const loadRequests = async () => {
     setLoading(true);
@@ -81,7 +86,8 @@ export default function HRLeavePage() {
         {loading ? (
           <div className="flex-center" style={{ padding: '3rem' }}><Loader2 className="animate-spin text-muted" /></div>
         ) : (
-          <table className="table">
+          <div className="table-container">
+<table className="table">
             <thead>
               <tr>
                 <th>Guard Name</th>
@@ -94,7 +100,7 @@ export default function HRLeavePage() {
             </thead>
             <tbody>
               {requests.map(req => (
-                <tr key={req.id}>
+                <tr key={req.id} style={req.id === deepLinkId ? { backgroundColor: 'rgba(99,102,241,0.1)', outline: '2px solid var(--accent)' } : {}}>
                   <td>
                     <div className="fw-600">{req.guard?.name}</div>
                     <div className="text-xs text-muted">{req.guard?.staffId}</div>
@@ -147,6 +153,7 @@ export default function HRLeavePage() {
               )}
             </tbody>
           </table>
+</div>
         )}
       </div>
     </div>

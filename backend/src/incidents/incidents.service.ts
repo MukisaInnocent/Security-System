@@ -44,6 +44,22 @@ export class IncidentsService {
       },
     });
 
+    // Notify administrators and supervisors
+    const adminUsers = await this.prisma.user.findMany({
+      where: { role: { in: ['ADMIN', 'CEO', 'OPS_MANAGER', 'SUPERVISOR'] }, isActive: true },
+    });
+    for (const admin of adminUsers) {
+      await this.prisma.notification.create({
+        data: {
+          userId: admin.id,
+          title: `New Incident: ${incident.severity} Severity`,
+          message: `A new ${incident.severity} incident has been reported at ${incident.site.name}.`,
+          type: incident.severity === 'CRITICAL' || incident.severity === 'HIGH' ? 'ALERT' : 'INFO',
+          link: `/admin/incidents?id=${incident.id}`,
+        },
+      });
+    }
+
     return incident;
   }
 
@@ -106,6 +122,19 @@ export class IncidentsService {
         metadata: JSON.stringify({ action: 'assigned', assignedTo: incident.assignedTo?.name }),
       },
     });
+
+    // Notify the assigned user
+    if (assignedToId) {
+      await this.prisma.notification.create({
+        data: {
+          userId: assignedToId,
+          title: 'Incident Assigned to You',
+          message: `You have been assigned to an incident at ${incident.site.name}.`,
+          type: 'INFO',
+          link: `/admin/incidents?id=${incident.id}`,
+        },
+      });
+    }
 
     return incident;
   }

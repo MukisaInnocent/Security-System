@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import { AlertTriangle, MapPin, User, Target, CheckCircle2, Check, LoaderCircle, ShieldAlert } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { ShieldAlert, MapPin, User, Target, CheckCircle2, Check, LoaderCircle, AlertTriangle } from 'lucide-react';
 import ContextualChat from '@/components/ContextualChat';
 
 export default function IncidentsPage() {
+  const searchParams = useSearchParams();
+  const deepLinkId = searchParams.get('id');
   const [incidents, setIncidents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [severityFilter, setSeverityFilter] = useState('');
@@ -23,6 +26,13 @@ export default function IncidentsPage() {
   };
 
   useEffect(() => { load(); }, [severityFilter, statusFilter]);
+
+  useEffect(() => {
+    if (deepLinkId && incidents.length > 0) {
+      const inc = incidents.find(i => i.id === deepLinkId);
+      if (inc) setSelectedIncident(inc);
+    }
+  }, [deepLinkId, incidents]);
 
   const handleResolve = async (id: string) => {
     if (!resolutionNote.trim()) { alert('Please enter a resolution note'); return; }

@@ -52,6 +52,7 @@ export class ProcurementService {
         title: `Purchase Request ${approved ? 'Approved' : 'Rejected'}`,
         message: `Your request for "${req.itemDescription}" has been ${approved ? 'approved' : 'rejected'}${!approved && rejectReason ? ': ' + rejectReason : ''}.`,
         type: approved ? 'INFO' : 'WARNING',
+        link: `/procurement?id=${req.id}`,
       },
     });
 

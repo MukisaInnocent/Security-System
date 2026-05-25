@@ -490,6 +490,31 @@ async function main() {
   for (const n of notifs) await prisma.notification.create({ data: n });
   console.log(`✅ Notifications created`);
 
+  // === URSB BRAP DATA & REPORTS ===
+  if (guards.length > 1 && sites.length > 1) {
+    await prisma.personnelMovement.create({
+      data: {
+        guardId: guards[0].id, movementType: 'TRANSFER', fromSiteId: sites[0].id, toSiteId: sites[1].id,
+        reason: 'Requested transfer to new location', effectiveDate: new Date(), status: 'COMPLETED', approvedById: hr.id, notes: 'Approved by regional manager'
+      }
+    });
+    
+    await prisma.changeSheet.create({
+      data: {
+        guardId: guards[1].id, changeType: 'SALARY', reason: 'Annual increment', amount: 250000,
+        previousValue: '200000', newValue: '250000', status: 'APPROVED', approvedById: hr.id, approvedAt: new Date()
+      }
+    });
+
+    await prisma.deploymentReport.create({
+      data: {
+        reportDate: new Date(), reportType: 'DAILY_COVERAGE', generatedById: 'SYSTEM', totalGuards: 20, deployedGuards: 18, coveragePercent: 90, scheduleSlot: '8AM',
+        absentGuards: JSON.stringify([{ guardId: guards[2].id, name: guards[2].name, reason: 'No-show for shift' }]),
+      }
+    });
+    console.log(`✅ URSB BRAP & Deployment Reports seeded`);
+  }
+
   console.log('\n🎉 DDBMS v1.4 Seed Complete!\n');
   console.log('📋 LOGIN CREDENTIALS:');
   console.log('  CEO:                ceo@security.com          / ceo123');

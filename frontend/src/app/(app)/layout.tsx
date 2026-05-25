@@ -7,11 +7,11 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import ChatWidget from '@/components/ChatWidget';
 import {
-  Shield, LayoutDashboard, Eye, Lock, Building2, BarChart3,
+  LayoutDashboard, Eye, Lock, Building2, BarChart3,
   Users, MapPin, CalendarDays, ClipboardCheck, AlertTriangle,
   Bell, LogOut, Wifi, WifiOff, ChevronRight, Zap, Sun, Moon,
   Crosshair, UserCheck, Briefcase, Truck, FileText, BadgeDollarSign,
-  Utensils, Wallet, FileCheck, MessageSquare
+  Utensils, Wallet, FileCheck, MessageSquare, FileBarChart, ArrowLeftRight, FilePenLine
 } from 'lucide-react';
 
 type NavItem = { label: string; path: string; icon: React.ReactNode; roles: string[] };
@@ -33,12 +33,15 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
     { label: 'Incidents',     path: '/admin/incidents',   icon: <AlertTriangle size={16} />,  roles: ['ADMIN', 'CEO', 'OPS_MANAGER', 'REGIONAL_MANAGER'] },
     { label: 'Spot Checks',   path: '/admin/spot-check',  icon: <Eye size={16} />,            roles: ['ADMIN', 'CEO', 'OPS_MANAGER', 'REGIONAL_MANAGER', 'SUPERVISOR', 'HR'] },
     { label: 'Special Duty',  path: '/admin/special-duty',icon: <Briefcase size={16} />,      roles: ['ADMIN', 'CEO', 'OPS_MANAGER', 'FINANCE'] },
+    { label: 'Reports',       path: '/admin/reports',     icon: <FileBarChart size={16} />,   roles: ['ADMIN', 'CEO', 'OPS_MANAGER', 'REGIONAL_MANAGER', 'SUPERVISOR', 'HR'] },
   ],
   hr: [
     { label: 'Guard Records', path: '/hr/guards',       icon: <UserCheck size={16} />,    roles: ['ADMIN', 'CEO', 'HR', 'OPS_MANAGER'] },
     { label: 'Leave Requests',path: '/hr/leave',        icon: <CalendarDays size={16} />, roles: ['ADMIN', 'HR', 'OPS_MANAGER'] },
     { label: 'Payroll',       path: '/hr/payroll',      icon: <Wallet size={16} />,       roles: ['ADMIN', 'CEO', 'FINANCE', 'HR'] },
     { label: 'Weapon Registry',path: '/hr/weapons',     icon: <Crosshair size={16} />,    roles: ['ADMIN', 'CEO', 'HR', 'ARMOURY_OFFICER'] },
+    { label: 'Change Sheets', path: '/hr/change-sheets',icon: <FilePenLine size={16} />,  roles: ['ADMIN', 'CEO', 'HR', 'OPS_MANAGER'] },
+    { label: 'Movements',     path: '/hr/movements',    icon: <ArrowLeftRight size={16} />, roles: ['ADMIN', 'CEO', 'HR', 'OPS_MANAGER'] },
   ],
   assets: [
     { label: 'Armoury',       path: '/armoury',         icon: <Crosshair size={16} />,    roles: ['ADMIN', 'CEO', 'ARMOURY_OFFICER'] },
@@ -75,7 +78,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       setTheme('light');
       document.documentElement.classList.add('light');
     }
-  }, []);
+
+    // Apply tenant branding if available
+    if (user?.tenant) {
+      if (user.tenant.primaryColor) {
+        document.documentElement.style.setProperty('--primary-brand', user.tenant.primaryColor);
+      }
+      if (user.tenant.secondaryColor) {
+        document.documentElement.style.setProperty('--secondary-brand', user.tenant.secondaryColor);
+      }
+    }
+  }, [user]);
 
   const toggleTheme = () => {
     setTheme(t => {
@@ -127,11 +140,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setNotifications(n => n.map(x => ({ ...x, isRead: true })));
   };
 
+  const handleNotificationClick = async (n: any) => {
+    if (!n.isRead) {
+      await api.markNotificationRead(n.id);
+      setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, isRead: true } : x));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+    
+    if (n.link) {
+      router.push(n.link);
+      setShowNotifications(false);
+    }
+  };
+
   if (loading || !user) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: '0.75rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: '0.75rem', flexDirection: 'column' }}>
+        <img src="/logo.jpg" alt="wedeployed" width={64} height={64} style={{ borderRadius: '14px', marginBottom: '0.5rem' }} />
         <div className="loading-spinner" />
-        <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading SecureGuard...</span>
+        <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading DDBMS...</span>
       </div>
     );
   }
@@ -153,8 +180,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile header */}
       <div style={{
         display: 'none', background: 'var(--bg-secondary)', padding: '0.75rem 1rem',
+        paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))',
         borderBottom: '1px solid var(--border)', alignItems: 'center', justifyContent: 'space-between',
         position: 'sticky', top: 0, zIndex: 50,
+        backdropFilter: 'blur(16px) saturate(1.4)', WebkitBackdropFilter: 'blur(16px) saturate(1.4)',
       }} className="mobile-header">
         <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
           background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center'
@@ -162,8 +191,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <ChevronRight size={22} style={{ transform: sidebarOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
         </button>
         <span style={{ fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <Shield size={16} color="var(--accent-light)" />
-          <span className="gradient-text">SecureGuard</span> Pro
+          <img src={user?.tenant?.logoUrl || "/logo.jpg"} alt={user?.tenant?.name || "wedeployed"} width={28} height={28} style={{ borderRadius: '6px' }} />
+          <span style={{ background: 'linear-gradient(135deg, var(--primary-brand, #2563eb), var(--secondary-brand, #3b82f6))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{user?.tenant?.name || "wedeployed"}</span>
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button onClick={toggleTheme} style={{
@@ -185,16 +214,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Brand */}
         <div className="sidebar-brand">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{
-              width: '38px', height: '38px', background: 'var(--accent-gradient)', borderRadius: '10px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 10px var(--accent-glow)',
-            }}><Shield size={20} color="white" /></div>
+            <img src={user?.tenant?.logoUrl || "/logo.jpg"} alt={user?.tenant?.name || "wedeployed"} width={38} height={38} style={{ borderRadius: '10px', boxShadow: '0 2px 10px rgba(30,64,175,0.3)' }} />
             <div>
-              <div style={{ fontWeight: 800, fontSize: '0.9rem', letterSpacing: '-0.01em' }}>
-                <span className="gradient-text">SecureGuard</span>
+              <div style={{ fontWeight: 800, fontSize: '0.9rem', letterSpacing: '-0.01em', color: 'var(--primary-brand, #2563eb)' }}>
+                {user?.tenant?.name || "wedeployed"}
               </div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600 }}>Enterprise v2.0</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600 }}>DDBMS v1.1.4</div>
             </div>
           </div>
         </div>
@@ -383,11 +408,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '400px', overflowY: 'auto' }}>
                 {notifications.map((n: any) => (
-                  <div key={n.id} style={{
-                    padding: '0.75rem', borderRadius: 'var(--radius-sm)',
-                    background: n.isRead ? 'transparent' : 'rgba(99,102,241,0.06)',
-                    border: `1px solid ${n.isRead ? 'var(--border-light)' : 'rgba(99,102,241,0.2)'}`,
-                  }}>
+                  <div 
+                    key={n.id} 
+                    onClick={() => handleNotificationClick(n)}
+                    style={{
+                      padding: '0.75rem', borderRadius: 'var(--radius-sm)',
+                      background: n.isRead ? 'transparent' : 'rgba(99,102,241,0.06)',
+                      border: `1px solid ${n.isRead ? 'var(--border-light)' : 'rgba(99,102,241,0.2)'}`,
+                      cursor: n.link ? 'pointer' : 'default',
+                      transition: 'all 0.2s',
+                    }}
+                    className={n.link ? 'notification-item-interactive' : ''}
+                  >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                       <div style={{ fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         {n.type === 'ALERT'
@@ -413,18 +445,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Main content */}
-      <main className="main-content" style={{ marginLeft: '260px', minHeight: '100vh', padding: '1.5rem' }}>
+      <main className="app-main-content">
         {children}
       </main>
 
       <ChatWidget />
-
-      <style jsx>{`
-        @media (max-width: 768px) {
-          .mobile-header { display: flex !important; }
-          .main-content { margin-left: 0 !important; padding-bottom: 2rem !important; }
-        }
-      `}</style>
     </div>
   );
 }

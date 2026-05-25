@@ -1,3 +1,15 @@
+// Disable service worker on localhost to prevent development caching issues
+if (typeof self !== 'undefined' && self.location.hostname === 'localhost') {
+  self.addEventListener('install', () => self.skipWaiting());
+  self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
+  self.addEventListener('fetch', (event) => {
+    // Just perform a standard fetch, don't use cache
+    event.respondWith(fetch(event.request));
+  });
+  // Stop processing the rest of the file
+  throw new Error('Service Worker disabled on localhost');
+}
+
 const CACHE_NAME = 'secureguard-v2';
 const STATIC_ASSETS = [
   '/',

@@ -89,7 +89,8 @@ export default function RegionalDashboard() {
 
       <h2>Regional Sites</h2>
       <div className="card">
-        <table className="table">
+        <div className="table-container">
+<table className="table">
           <thead>
             <tr>
               <th>Site Name</th>
@@ -133,6 +134,7 @@ export default function RegionalDashboard() {
             )}
           </tbody>
         </table>
+</div>
       </div>
     </div>
   );
