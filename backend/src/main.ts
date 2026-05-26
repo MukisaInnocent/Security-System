@@ -4,12 +4,13 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
+import type { Request, Response, NextFunction } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Handle root health checks before the API global prefix.
-  app.use('/', (req, res, next) => {
+  app.use('/', (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'GET' && req.path === '/') {
       return res.json({ status: 'ok', service: 'ddbms-backend' });
     }
