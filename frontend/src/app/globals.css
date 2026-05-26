@@ -122,23 +122,23 @@ html, body {
 /* ══════════════════ ANIMATIONS ══════════════════ */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes fadeInScale {
   from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes slideInRight {
   from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes slideInLeft {
   from { opacity: 0; transform: translateX(-20px); }
-  to { opacity: 1; transform: translateX(0); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes pulseGlow {
   0%, 100% { box-shadow: 0 0 5px var(--accent-glow); }
@@ -619,7 +619,7 @@ tr:last-child td { border-bottom: none; }
 
 @keyframes slidePanel {
   from { opacity: 0; transform: translateX(100%); }
-  to { opacity: 1; transform: translateX(0); }
+  to { opacity: 1; transform: none; }
 }
 
 /* ══════════════════ MODAL OVERLAY ══════════════════ */
@@ -642,7 +642,7 @@ tr:last-child td { border-bottom: none; }
   border-radius: 0;
   padding: calc(1.5rem + var(--safe-top)) 1.5rem calc(1.5rem + var(--safe-bottom));
   width: 100%;
-  max-width: 100%; /* Fully display across the screen */
+  max-width: 600px;
   height: 100dvh;
   margin: 0; 
   overflow-y: auto;

@@ -112,7 +112,7 @@ export default function ChangeSheetsPage() {
                 <tr key={s.id}>
                   <td style={{ fontWeight: 600 }}>{s.guard?.name || '—'}<br /><span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{s.guard?.staffId || ''}</span></td>
                   <td><span className="badge badge-accent">{s.changeType}</span></td>
-                  <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.reason}</td>
+                  <td>{s.reason}</td>
                   <td>{s.amount ? `UGX ${s.amount.toLocaleString()}` : '—'}</td>
                   <td>{s.previousValue || '—'} → {s.newValue || '—'}</td>
                   <td><span className={`badge ${statusBadge(s.status)}`}>{s.status}</span></td>

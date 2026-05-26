@@ -414,7 +414,7 @@ export default function ChatPage() {
                 <img
                   src={msg.mediaUrl}
                   alt="attachment"
-                  style={{ maxWidth: '200px', borderRadius: '8px', display: 'block' }}
+                 
                 />
               </div>
             )}

@@ -135,7 +135,7 @@ export default function PersonnelMovementsPage() {
                       <MapPin size={12} />{m.toSite?.name || '—'}
                     </span>
                   </td>
-                  <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.reason}</td>
+                  <td>{m.reason}</td>
                   <td>{new Date(m.effectiveDate).toLocaleDateString()}</td>
                   <td><span className={`badge ${statusBadge(m.status)}`}>{m.status}</span></td>
                   <td>

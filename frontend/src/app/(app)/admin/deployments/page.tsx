@@ -85,7 +85,7 @@ export default function DeploymentsPage() {
                     <td style={{ fontSize: '0.8rem' }}>{d.date ? new Date(d.date).toLocaleDateString() : '—'}</td>
                     <td><span className="badge badge-accent">{d.shiftStart} – {d.shiftEnd}</span></td>
                     <td><span className={`badge ${statusBadge(d.status)}`}>{d.status}</span></td>
-                    <td style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.notes || '—'}</td>
+                    <td>{d.notes || '—'}</td>
                     <td style={{ textAlign: 'right' }}>
                       <button className="btn btn-ghost btn-sm" onClick={() => setSelectedDeployment(d)} title="Discussion">
                         <MessageSquare size={16} />
@@ -148,7 +148,7 @@ export default function DeploymentsPage() {
 
       {selectedDeployment && (
         <div className="modal-backdrop" onClick={() => setSelectedDeployment(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ padding: '1rem' }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '1rem' }}>
                 <CalendarDays size={18} /> Deployment Discussion

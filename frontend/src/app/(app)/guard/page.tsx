@@ -106,7 +106,7 @@ export default function GuardPage() {
   const hasCheckedOut = dashData?.todayAttendance?.some((a: any) => a.type === 'CHECK_OUT');
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '480px', margin: '0 auto' }}>
+    <div className="animate-fade-in">
       <div className="page-header">
         <div>
           <h1>Guard Panel</h1>
