@@ -66,6 +66,7 @@ model Tenant {
   MessageReadStatus       MessageReadStatus[]
   Notification            Notification[]
   AuditLog                AuditLog[]
+  DeploymentReport        DeploymentReport[]
 
   @@index([code])
 }
