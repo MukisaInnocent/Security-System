@@ -626,7 +626,7 @@ export default function ChatPage() {
       {/* ═══ New Chat Modal ═══ */}
       {showNewChat && (
         <div className="modal-backdrop" onClick={() => setShowNewChat(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Plus size={18} /> New Conversation
@@ -690,7 +690,7 @@ export default function ChatPage() {
       {/* ═══ Broadcast Modal ═══ */}
       {showBroadcast && (
         <div className="modal-backdrop" onClick={() => setShowBroadcast(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Megaphone size={18} /> Send Broadcast

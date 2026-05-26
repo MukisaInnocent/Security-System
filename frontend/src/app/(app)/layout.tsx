@@ -393,7 +393,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Notification panel */}
       {showNotifications && (
         <div className="modal-backdrop" onClick={() => setShowNotifications(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Bell size={18} /> Notifications</h2>
               {unreadCount > 0 && (

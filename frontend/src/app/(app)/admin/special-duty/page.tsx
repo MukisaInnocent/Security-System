@@ -111,7 +111,7 @@ export default function SpecialDutyPage() {
 
       {showModal && (
         <div className="modal-backdrop" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <h2>New Special Duty Assignment</h2>
             <div className="grid grid-2 gap-4 mt-4">
               <div className="col-span-2"><label className="label">Assignment Title</label><input className="input" placeholder="e.g. VIP Escort - Sheraton Hotel" /></div>

@@ -642,7 +642,7 @@ tr:last-child td { border-bottom: none; }
   border-radius: 0;
   padding: calc(1.5rem + var(--safe-top)) 1.5rem calc(1.5rem + var(--safe-bottom));
   width: 100%;
-  max-width: 600px;
+  max-width: 100%; /* Fully display across the screen */
   height: 100dvh;
   margin: 0; 
   overflow-y: auto;

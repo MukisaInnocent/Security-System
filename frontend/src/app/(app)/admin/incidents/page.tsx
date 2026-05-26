@@ -116,7 +116,7 @@ export default function IncidentsPage() {
       {/* Incident detail modal */}
       {selectedIncident && (
         <div className="modal-backdrop" onClick={() => setSelectedIncident(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '550px' }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1rem' }}>
               <AlertTriangle size={20} /> Incident Details
             </h2>

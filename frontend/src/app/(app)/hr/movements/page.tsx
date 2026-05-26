@@ -161,7 +161,7 @@ export default function PersonnelMovementsPage() {
       {/* Create Modal */}
       {showCreate && (
         <div className="modal-backdrop" onClick={() => setShowCreate(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ArrowLeftRight size={18} /> Record Movement</h2>
             <form onSubmit={handleCreate}>
               <div style={{ marginBottom: '1rem' }}>
