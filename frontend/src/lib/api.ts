@@ -1,17 +1,21 @@
 const getApiBase = () => {
-  let url = 'http://localhost:3001';
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    url = process.env.NEXT_PUBLIC_API_URL;
-  } else if (typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location;
-    url = `${protocol}//${hostname}:3001`;
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl) {
+    const normalized = envUrl.replace(/\/$/, '');
+    return normalized.endsWith('/api') ? normalized : `${normalized}/api`;
   }
-  
-  // Strip trailing slash if present
-  url = url.replace(/\/$/, '');
-  
-  // Ensure we append /api if it's not already there
-  return url.endsWith('/api') ? url : `${url}/api`;
+
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname, port } = window.location;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `${protocol}//${hostname}:3001/api`;
+    }
+
+    const origin = port ? `${protocol}//${hostname}:${port}` : `${protocol}//${hostname}`;
+    return `${origin}/api`;
+  }
+
+  return 'http://localhost:3001/api';
 };
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;
