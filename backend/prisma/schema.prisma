@@ -1123,3 +1123,29 @@ model SubscriptionPlan {
 
   tenants Tenant[]
 }
+
+model DeploymentReport {
+  id              String   @id @default(uuid())
+  reportDate      DateTime
+  reportType      String   // DAILY_COVERAGE, NIGHT_SHIFT
+  siteId          String?
+  regionId        String?
+  generatedById   String
+  totalGuards     Int      @default(0)
+  deployedGuards  Int      @default(0)
+  coveragePercent Int      @default(0)
+  absentGuards    String?  // JSON
+  reportData      String?  // JSON
+  scheduleSlot    String?
+  status          String   @default("GENERATED")
+  sentTo          String?  // JSON array of user IDs
+  sentAt          DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([reportDate])
+  @@index([reportType])
+}

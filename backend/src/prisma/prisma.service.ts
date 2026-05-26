@@ -36,13 +36,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
                 if (operation === 'create' || operation === 'createMany') {
                     // Inject tenantId on creation
                     if (args.data && !Array.isArray(args.data)) {
-                        args.data.tenantId = tenantId;
+                        (args as any).data.tenantId = tenantId;
                     } else if (Array.isArray(args.data)) {
-                        args.data = args.data.map(d => ({...d, tenantId}));
+                        (args as any).data = (args as any).data.map((d: any) => ({...d, tenantId}));
                     }
                 }
-                if (operation === 'count' && !args.where?.tenantId) {
-                    args.where = { ...args.where, tenantId };
+                if (operation === 'count' && !(args as any).where?.tenantId) {
+                    (args as any).where = { ...(args as any).where, tenantId };
                 }
                 return query(args);
             }
@@ -50,10 +50,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             // Apply tenant filtering for reads/updates/deletes
             const tenantFilter = { tenantId };
 
-            if (args.where) {
-              args.where = { ...args.where, ...tenantFilter };
+            if ((args as any).where) {
+              (args as any).where = { ...(args as any).where, ...tenantFilter };
             } else {
-              args.where = tenantFilter;
+              (args as any).where = tenantFilter;
             }
 
             return query(args);
