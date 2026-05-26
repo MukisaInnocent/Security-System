@@ -60,7 +60,7 @@ export default function LoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '1rem', position: 'relative', overflow: 'hidden',
       background: 'linear-gradient(135deg, #060a14 0%, #0c1222 40%, #111827 70%, #0f172a 100%)',
     }}>
@@ -112,7 +112,7 @@ export default function LoginPage() {
         <div style={{
           background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(20px)',
           border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)',
-          padding: '2rem', boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+          padding: 'clamp(1.25rem, 5vw, 2rem)', boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
         }}>
           <form onSubmit={handleSubmit}>
             {error && <div className="message message-error">{error}</div>}
