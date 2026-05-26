@@ -67,6 +67,8 @@ model Tenant {
   Notification            Notification[]
   AuditLog                AuditLog[]
   DeploymentReport        DeploymentReport[]
+  PersonnelMovement       PersonnelMovement[]
+  ChangeSheet             ChangeSheet[]
 
   @@index([code])
 }
@@ -1149,4 +1151,51 @@ model DeploymentReport {
 
   @@index([reportDate])
   @@index([reportType])
+}
+
+model PersonnelMovement {
+  id            String   @id @default(uuid())
+  guardId       String
+  movementType  String   // TRANSFER, SUSPENSION, TERMINATION, PROMOTION, DEMOTION, etc.
+  fromSiteId    String?
+  toSiteId      String?
+  reason        String
+  effectiveDate DateTime
+  notes         String?
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED, COMPLETED
+  approvedById  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([guardId])
+  @@index([status])
+  @@index([movementType])
+}
+
+model ChangeSheet {
+  id                String   @id @default(uuid())
+  guardId           String
+  changeType        String   // SALARY_ADJUSTMENT, BANK_DETAILS, CONTACT_INFO, MISCONDUCT_PENALTY
+  reason            String
+  amount            Float?
+  evidence          String?
+  mediaUrl          String?
+  serialOrBiometric String?
+  previousValue     String?
+  newValue          String?
+  status            String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  approvedById      String?
+  approvedAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([guardId])
+  @@index([status])
+  @@index([changeType])
 }
