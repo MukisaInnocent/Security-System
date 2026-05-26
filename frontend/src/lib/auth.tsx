@@ -9,6 +9,13 @@ interface User {
   name: string;
   role: string;
   phone?: string;
+  tenantId?: string;
+  tenant?: {
+    name: string;
+    logoUrl?: string | null;
+    primaryColor?: string | null;
+    secondaryColor?: string | null;
+  };
 }
 
 interface AuthContextType {
