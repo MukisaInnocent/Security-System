@@ -1,0 +1,1125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// CORE ORGANISATION MODELS
+// ============================================================
+
+model Tenant {
+  id                 String    @id @default(uuid())
+  name               String
+  code               String    @unique
+  currency           String    @default("UGX")
+  isActive           Boolean   @default(true)
+  logoUrl            String?
+  primaryColor       String?   @default("#0f172a")
+  secondaryColor     String?   @default("#3b82f6")
+  subscriptionPlanId String?
+  subscriptionStatus String    @default("TRIAL") // TRIAL, ACTIVE, PAST_DUE, CANCELED
+  trialEndsAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  plan                    SubscriptionPlan?         @relation(fields: [subscriptionPlanId], references: [id])
+  users                   User[]
+  sites                   Site[]
+  regions                 Region[]
+  GuardProfile            GuardProfile[]
+  LeaveRequest            LeaveRequest[]
+  Post                    Post[]
+  Deployment              Deployment[]
+  Attendance              Attendance[]
+  WeaponRecord            WeaponRecord[]
+  WeaponIssuance          WeaponIssuance[]
+  AmmunitionStock         AmmunitionStock[]
+  Supplier                Supplier[]
+  PurchaseRequest         PurchaseRequest[]
+  PurchaseOrder           PurchaseOrder[]
+  OrderItem               OrderItem[]
+  AssetDistribution       AssetDistribution[]
+  SiteInventory           SiteInventory[]
+  Contract                Contract[]
+  ContractSite            ContractSite[]
+  Invoice                 Invoice[]
+  Payment                 Payment[]
+  ClientSite              ClientSite[]
+  Incident                Incident[]
+  SpecialDuty             SpecialDuty[]
+  SpecialDutyPersonnel    SpecialDutyPersonnel[]
+  PayrollRecord           PayrollRecord[]
+  SpotCheck               SpotCheck[]
+  GuardCharge             GuardCharge[]
+  DeploymentVoid          DeploymentVoid[]
+  FoodSupplierAccount     FoodSupplierAccount[]
+  FoodSupplierSite        FoodSupplierSite[]
+  MealDelivery            MealDelivery[]
+  MealVerification        MealVerification[]
+  Conversation            Conversation[]
+  ConversationParticipant ConversationParticipant[]
+  Message                 Message[]
+  MessageReadStatus       MessageReadStatus[]
+  Notification            Notification[]
+  AuditLog                AuditLog[]
+
+  @@index([code])
+}
+
+model Region {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  tenantId    String
+  managerId   String? // Regional Manager user ID
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant  Tenant @relation(fields: [tenantId], references: [id])
+  manager User?  @relation("RegionManager", fields: [managerId], references: [id])
+  sites   Site[]
+
+  @@index([tenantId])
+  @@index([managerId])
+}
+
+model User {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  password         String
+  name             String
+  phone            String?
+  role             String   @default("GUARD")
+  staffId          String?  @unique
+  nationalId       String?
+  address          String?
+  emergencyContact String? // JSON: {name, phone}
+  tenantId         String?
+  profileImg       String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant                   Tenant?                @relation(fields: [tenantId], references: [id])
+  managedRegions           Region[]               @relation("RegionManager")
+  guardProfile             GuardProfile?
+  deployments              Deployment[]           @relation("GuardDeployments")
+  supervisedDeployments    Deployment[]           @relation("SupervisorDeployments")
+  attendances              Attendance[]
+  incidents                Incident[]             @relation("ReportedIncidents")
+  assignedIncidents        Incident[]             @relation("AssignedIncidents")
+  resolvedIncidents        Incident[]             @relation("ResolvedIncidents")
+  auditLogs                AuditLog[]
+  notifications            Notification[]
+  clientSites              ClientSite[]
+  leaveRequests            LeaveRequest[]         @relation("GuardLeaveRequests")
+  approvedLeaveRequests    LeaveRequest[]         @relation("ApproverLeaveRequests")
+  weaponIssuances          WeaponIssuance[]       @relation("GuardWeaponIssuances")
+  supervisedIssuances      WeaponIssuance[]       @relation("SupervisorIssuances")
+  armouryReturns           WeaponIssuance[]       @relation("ArmouryOfficerReturns")
+  purchaseRequests         PurchaseRequest[]
+  specialDutyCreated       SpecialDuty[]          @relation("SpecialDutyCreator")
+  specialDutyPersonnel     SpecialDutyPersonnel[]
+  payrollRecords           PayrollRecord[]
+  spotChecksPerformed      SpotCheck[]            @relation("SpotCheckPerformer")
+  spotChecksReceived       SpotCheck[]            @relation("SpotCheckGuard")
+  chargesRaised            GuardCharge[]          @relation("ChargeRaiser")
+  chargesReceived          GuardCharge[]          @relation("ChargeGuard")
+  deploymentVoidsInitiated DeploymentVoid[]       @relation("VoidInitiator")
+  deploymentVoidsApproved  DeploymentVoid[]       @relation("VoidApprover")
+
+  @@index([role])
+  @@index([email])
+  @@index([tenantId])
+  @@index([staffId])
+}
+
+// ============================================================
+// HR MODULE MODELS
+// ============================================================
+
+model GuardProfile {
+  id                  String    @id @default(uuid())
+  userId              String    @unique
+  contractRef         String?
+  weaponAuthorised    Boolean   @default(false)
+  biometricEnrolled   Boolean   @default(false)
+  biometricPin        String? // Simulated biometric — hashed PIN
+  monthlySalary       Float     @default(0)
+  salaryEffectiveDate DateTime?
+  leaveBalance        Int       @default(21) // Annual leave days
+  primarySiteId       String? // Permanent deployment site
+  primaryPostId       String? // Permanent post
+  primaryShift        String? // DAY or NIGHT
+  isPermanent         Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user        User  @relation(fields: [userId], references: [id])
+  primarySite Site? @relation("PrimaryGuardSite", fields: [primarySiteId], references: [id])
+  primaryPost Post? @relation("PrimaryGuardPost", fields: [primaryPostId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([userId])
+  @@index([weaponAuthorised])
+}
+
+model LeaveRequest {
+  id           String   @id @default(uuid())
+  guardId      String
+  leaveType    String // ANNUAL, SICK, EMERGENCY, UNPAID
+  startDate    DateTime
+  endDate      DateTime
+  reason       String?
+  status       String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  approverId   String?
+  rejectReason String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  guard    User  @relation("GuardLeaveRequests", fields: [guardId], references: [id])
+  approver User? @relation("ApproverLeaveRequests", fields: [approverId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([guardId])
+  @@index([status])
+  @@index([startDate])
+}
+
+// ============================================================
+// SITE AND POST MODELS
+// ============================================================
+
+model Site {
+  id             String   @id @default(uuid())
+  name           String
+  address        String
+  latitude       Float
+  longitude      Float
+  geofenceRadius Float    @default(100)
+  regionId       String?
+  tenantId       String?
+  clientId       String? // Primary client for this site
+  contractRef    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  region            Region?            @relation(fields: [regionId], references: [id])
+  tenant            Tenant?            @relation(fields: [tenantId], references: [id])
+  deployments       Deployment[]
+  attendances       Attendance[]
+  incidents         Incident[]
+  clientSites       ClientSite[]
+  posts             Post[]
+  primaryGuards     GuardProfile[]     @relation("PrimaryGuardSite")
+  weaponIssuances   WeaponIssuance[]
+  ammunitionStocks  AmmunitionStock[]
+  siteInventory     SiteInventory[]
+  contractSites     ContractSite[]
+  foodSupplierSites FoodSupplierSite[]
+  mealDeliveries    MealDelivery[]
+
+  @@index([isActive])
+  @@index([tenantId])
+  @@index([regionId])
+}
+
+model Post {
+  id             String   @id @default(uuid())
+  name           String
+  siteId         String
+  shiftType      String   @default("BOTH") // DAY, NIGHT, BOTH
+  guardsRequired Int      @default(1)
+  weaponRequired Boolean  @default(false)
+  instructions   String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  site          Site           @relation(fields: [siteId], references: [id])
+  deployments   Deployment[]
+  primaryGuards GuardProfile[] @relation("PrimaryGuardPost")
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([siteId])
+  @@index([isActive])
+}
+
+// ============================================================
+// DEPLOYMENT MODELS (Enhanced)
+// ============================================================
+
+model Deployment {
+  id                String    @id @default(uuid())
+  guardId           String
+  siteId            String
+  postId            String?
+  supervisorId      String?
+  shiftType         String    @default("DAY") // DAY, NIGHT
+  shiftStart        String
+  shiftEnd          String
+  date              DateTime
+  status            String    @default("SCHEDULED") // SCHEDULED, ACTIVE, COMPLETED, CANCELLED, VOIDED
+  deploymentType    String    @default("STANDARD") // STANDARD, PERMANENT, CROSS_SITE, OVERTIME
+  homeSiteId        String? // For cross-site deployments
+  signInTime        DateTime?
+  signOutTime       DateTime?
+  shiftDuration     Float? // Calculated hours
+  biometricVerified Boolean   @default(false)
+  gpsLatIn          Float?
+  gpsLngIn          Float?
+  gpsLatOut         Float?
+  gpsLngOut         Float?
+  isWithinGeofence  Boolean   @default(false)
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  guard          User            @relation("GuardDeployments", fields: [guardId], references: [id])
+  supervisor     User?           @relation("SupervisorDeployments", fields: [supervisorId], references: [id])
+  site           Site            @relation(fields: [siteId], references: [id])
+  post           Post?           @relation(fields: [postId], references: [id])
+  attendances    Attendance[]
+  weaponIssuance WeaponIssuance?
+  spotChecks     SpotCheck[]
+  voidRecord     DeploymentVoid?
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([guardId])
+  @@index([siteId])
+  @@index([postId])
+  @@index([date])
+  @@index([status])
+  @@index([shiftType])
+}
+
+model Attendance {
+  id                String   @id @default(uuid())
+  guardId           String
+  siteId            String
+  deploymentId      String?
+  type              String // CHECK_IN, CHECK_OUT
+  timestamp         DateTime @default(now())
+  latitude          Float
+  longitude         Float
+  isWithinGeofence  Boolean  @default(false)
+  biometricVerified Boolean  @default(false)
+  syncedFromOffline Boolean  @default(false)
+  offlineId         String?
+  createdAt         DateTime @default(now())
+
+  guard      User        @relation(fields: [guardId], references: [id])
+  site       Site        @relation(fields: [siteId], references: [id])
+  deployment Deployment? @relation(fields: [deploymentId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([guardId])
+  @@index([siteId])
+  @@index([timestamp])
+  @@index([offlineId])
+}
+
+// ============================================================
+// ARMOURY MODULE MODELS
+// ============================================================
+
+model WeaponRecord {
+  id            String    @id @default(uuid())
+  serialNumber  String    @unique
+  weaponType    String // PISTOL, SHOTGUN, RIFLE, OTHER
+  make          String?
+  model         String?
+  status        String    @default("AVAILABLE") // AVAILABLE, ISSUED, UNDER_MAINTENANCE, DECOMMISSIONED
+  primarySiteId String?
+  licenceNumber String?
+  licenceExpiry DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  issuances WeaponIssuance[]
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([status])
+  @@index([serialNumber])
+}
+
+model WeaponIssuance {
+  id               String    @id @default(uuid())
+  weaponId         String
+  guardId          String
+  siteId           String
+  deploymentId     String?   @unique
+  supervisorId     String
+  shiftType        String
+  issueTimestamp   DateTime  @default(now())
+  returnTimestamp  DateTime?
+  returnCondition  String? // GOOD, REQUIRES_INSPECTION, DAMAGED
+  isReturned       Boolean   @default(false)
+  armouryOfficerId String? // Who confirmed the return
+  roundsIssued     Int       @default(0)
+  roundsReturned   Int?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  weapon         WeaponRecord @relation(fields: [weaponId], references: [id])
+  guard          User         @relation("GuardWeaponIssuances", fields: [guardId], references: [id])
+  supervisor     User         @relation("SupervisorIssuances", fields: [supervisorId], references: [id])
+  armouryOfficer User?        @relation("ArmouryOfficerReturns", fields: [armouryOfficerId], references: [id])
+  site           Site         @relation(fields: [siteId], references: [id])
+  deployment     Deployment?  @relation(fields: [deploymentId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([weaponId])
+  @@index([guardId])
+  @@index([siteId])
+  @@index([isReturned])
+}
+
+model AmmunitionStock {
+  id        String   @id @default(uuid())
+  siteId    String
+  calibre   String // e.g. 9mm, 12gauge, 5.56mm
+  type      String // BALL, HOLLOW_POINT, BUCKSHOT
+  quantity  Int      @default(0)
+  minStock  Int      @default(50)
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  site Site @relation(fields: [siteId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([siteId, calibre, type])
+  @@index([siteId])
+}
+
+// ============================================================
+// PROCUREMENT MODULE MODELS
+// ============================================================
+
+model Supplier {
+  id                 String   @id @default(uuid())
+  name               String
+  registrationNumber String?
+  categories         String? // JSON array of supply categories
+  contactName        String
+  contactPhone       String
+  contactEmail       String?
+  currentPricing     String? // JSON key-value of item: price
+  agreementRef       String?
+  performanceRating  Float    @default(3.0)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([isActive])
+}
+
+model PurchaseRequest {
+  id              String   @id @default(uuid())
+  requestedById   String
+  department      String // HR, ARMOURY, OPERATIONS, LOGISTICS, OTHER
+  itemDescription String
+  quantity        Int
+  urgencyLevel    String   @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED, FULFILLED
+  rejectReason    String?
+  linkedOrderId   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  requestedBy   User           @relation(fields: [requestedById], references: [id])
+  purchaseOrder PurchaseOrder? @relation(fields: [linkedOrderId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([status])
+  @@index([requestedById])
+  @@index([department])
+}
+
+model PurchaseOrder {
+  id            String    @id @default(uuid())
+  supplierId    String
+  orderNumber   String    @unique @default(cuid())
+  totalAmount   Float     @default(0)
+  status        String    @default("PENDING_DELIVERY") // PENDING_DELIVERY, DELIVERED, CANCELLED
+  expectedDate  DateTime?
+  deliveredDate DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  supplier         Supplier          @relation(fields: [supplierId], references: [id])
+  purchaseRequests PurchaseRequest[]
+  orderItems       OrderItem[]
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([status])
+  @@index([supplierId])
+}
+
+model OrderItem {
+  id          String @id @default(uuid())
+  orderId     String
+  description String
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+
+  order PurchaseOrder @relation(fields: [orderId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([orderId])
+}
+
+// ============================================================
+// LOGISTICS MODULE MODELS
+// ============================================================
+
+model AssetDistribution {
+  id                  String   @id @default(uuid())
+  equipmentType       String // UNIFORM, RADIO, TORCH, VEHICLE, OTHER
+  itemDescription     String
+  quantity            Int
+  destinationSiteId   String?
+  destinationGuardId  String?
+  deliveryDate        DateTime
+  logisticsOfficerId  String
+  conditionAtDispatch String   @default("GOOD") // GOOD, REFURBISHED, REPAIRED
+  linkedPOId          String?
+  notes               String?
+  createdAt           DateTime @default(now())
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([destinationSiteId])
+  @@index([deliveryDate])
+}
+
+model SiteInventory {
+  id              String   @id @default(uuid())
+  siteId          String
+  equipmentType   String
+  itemDescription String
+  quantity        Int      @default(0)
+  minThreshold    Int      @default(2)
+  lastUpdated     DateTime @default(now())
+
+  site Site @relation(fields: [siteId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([siteId, equipmentType, itemDescription])
+  @@index([siteId])
+  @@index([quantity])
+}
+
+// ============================================================
+// FINANCE MODULE MODELS
+// ============================================================
+
+model Contract {
+  id                     String    @id @default(uuid())
+  contractNumber         String    @unique @default(cuid())
+  clientId               String
+  requiredGuardsPerShift Int       @default(1)
+  requiredShifts         String    @default("BOTH") // DAY, NIGHT, BOTH
+  billingRate            Float // Per guard per shift
+  billingCycle           String    @default("MONTHLY") // MONTHLY, FORTNIGHTLY
+  specialRequirements    String?
+  status                 String    @default("ACTIVE") // ACTIVE, EXPIRING, EXPIRED, TERMINATED
+  startDate              DateTime
+  endDate                DateTime?
+  isRolling              Boolean   @default(false)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  client        ClientSite[]   @relation("ContractClient")
+  contractSites ContractSite[]
+  invoices      Invoice[]
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([clientId])
+  @@index([status])
+  @@index([endDate])
+}
+
+model ContractSite {
+  id         String @id @default(uuid())
+  contractId String
+  siteId     String
+
+  contract Contract @relation(fields: [contractId], references: [id])
+  site     Site     @relation(fields: [siteId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([contractId, siteId])
+}
+
+model Invoice {
+  id                 String    @id @default(uuid())
+  invoiceNumber      String    @unique @default(cuid())
+  contractId         String
+  clientId           String
+  billingPeriodStart DateTime
+  billingPeriodEnd   DateTime
+  totalShifts        Int       @default(0)
+  totalAmount        Float     @default(0)
+  adjustments        Float     @default(0)
+  adjustmentNote     String?
+  finalAmount        Float     @default(0)
+  status             String    @default("DRAFT") // DRAFT, SENT, PAID, OVERDUE, CANCELLED
+  dueDate            DateTime?
+  sentAt             DateTime?
+  pdfUrl             String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  contract Contract  @relation(fields: [contractId], references: [id])
+  payments Payment[]
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([contractId])
+  @@index([clientId])
+  @@index([status])
+}
+
+model Payment {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  amount      Float
+  paymentDate DateTime
+  reference   String?
+  method      String? // BANK_TRANSFER, CASH, MOBILE_MONEY
+  recordedBy  String?
+  createdAt   DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([invoiceId])
+}
+
+// ============================================================
+// CLIENT PORTAL MODELS
+// ============================================================
+
+model ClientSite {
+  id         String  @id @default(uuid())
+  clientId   String
+  siteId     String
+  contractId String?
+
+  client   User      @relation(fields: [clientId], references: [id])
+  site     Site      @relation(fields: [siteId], references: [id])
+  contract Contract? @relation("ContractClient", fields: [contractId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([clientId, siteId])
+  @@index([clientId])
+  @@index([siteId])
+}
+
+// ============================================================
+// INCIDENT MODULE
+// ============================================================
+
+model Incident {
+  id                String    @id @default(uuid())
+  reportedById      String
+  siteId            String
+  postId            String?
+  category          String    @default("OTHER") // TRESPASS, THEFT, MEDICAL, PROPERTY_DAMAGE, SUSPICIOUS_ACTIVITY, OTHER
+  description       String
+  severity          String    @default("LOW") // LOW, MEDIUM, HIGH, CRITICAL
+  status            String    @default("OPEN") // OPEN, INVESTIGATING, IN_PROGRESS, RESOLVED, CLOSED
+  assignedToId      String?
+  resolvedById      String?
+  resolutionNote    String?
+  latitude          Float?
+  longitude         Float?
+  mediaUrl          String? // JSON array of media URLs
+  syncedFromOffline Boolean   @default(false)
+  offlineId         String?
+  resolvedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  reportedBy User  @relation("ReportedIncidents", fields: [reportedById], references: [id])
+  assignedTo User? @relation("AssignedIncidents", fields: [assignedToId], references: [id])
+  resolvedBy User? @relation("ResolvedIncidents", fields: [resolvedById], references: [id])
+  site       Site  @relation(fields: [siteId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([siteId])
+  @@index([severity])
+  @@index([status])
+  @@index([createdAt])
+  @@index([offlineId])
+  @@index([assignedToId])
+}
+
+// ============================================================
+// SPECIAL DUTY MODULE
+// ============================================================
+
+model SpecialDuty {
+  id                    String    @id @default(uuid())
+  title                 String
+  assignmentType        String // EVENT, EMERGENCY_COVER, VIP_PROTECTION, CLIENT_REQUEST, OTHER
+  location              String
+  gpsLat                Float?
+  gpsLng                Float?
+  date                  DateTime
+  startTime             String
+  endTime               String
+  reportingSupervisorId String?
+  paymentPerPerson      Float
+  paymentTiming         String    @default("IMMEDIATE") // IMMEDIATE or specific date
+  clientReference       String?
+  briefingNotes         String?
+  createdById           String
+  status                String    @default("PENDING_CONFIRMATION") // PENDING_CONFIRMATION, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED
+  cancellationReason    String?
+  financeNotified       Boolean   @default(false)
+  responseDeadline      DateTime?
+  totalPaymentLiability Float     @default(0)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  createdBy User                   @relation("SpecialDutyCreator", fields: [createdById], references: [id])
+  personnel SpecialDutyPersonnel[]
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([status])
+  @@index([date])
+  @@index([createdById])
+}
+
+model SpecialDutyPersonnel {
+  id                String    @id @default(uuid())
+  specialDutyId     String
+  userId            String
+  confirmStatus     String    @default("PENDING") // PENDING, CONFIRMED, DECLINED
+  declineReason     String?
+  attendanceStatus  String    @default("PENDING") // PENDING, ATTENDED, NO_SHOW
+  biometricVerified Boolean   @default(false)
+  paymentStatus     String    @default("PENDING") // PENDING, PROCESSED
+  notifiedAt        DateTime?
+  respondedAt       DateTime?
+  createdAt         DateTime  @default(now())
+
+  specialDuty SpecialDuty @relation(fields: [specialDutyId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([specialDutyId, userId])
+  @@index([specialDutyId])
+  @@index([userId])
+}
+
+// ============================================================
+// PAYROLL MODULE
+// ============================================================
+
+model PayrollRecord {
+  id                 String    @id @default(uuid())
+  guardId            String
+  payrollMonth       Int // 1-12
+  payrollYear        Int
+  monthlySalary      Float
+  totalDaysInMonth   Int
+  dailyRate          Float
+  totalShiftsWorked  Int       @default(0)
+  overtimeShifts     Int       @default(0)
+  shiftsAbsent       Int       @default(0)
+  totalPayrollAmount Float     @default(0)
+  deductions         Float     @default(0)
+  deductionNote      String?
+  netPay             Float     @default(0)
+  specialDutyTotal   Float     @default(0) // Informational only, not in netPay
+  status             String    @default("DRAFT") // DRAFT, UNDER_REVIEW, APPROVED, PAID
+  approvedById       String?
+  approvedAt         DateTime?
+  lockedAt           DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  guard User @relation(fields: [guardId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([guardId, payrollMonth, payrollYear])
+  @@index([guardId])
+  @@index([payrollYear, payrollMonth])
+  @@index([status])
+}
+
+// ============================================================
+// SPOT CHECK MODULE
+// ============================================================
+
+model SpotCheck {
+  id                 String    @id @default(uuid())
+  siteId             String?
+  guardId            String
+  deploymentId       String
+  postId             String?
+  shiftType          String?
+  originalSignInTime DateTime?
+  performedById      String
+  biometricResult    String // PASS, FAIL
+  gpsLat             Float?
+  gpsLng             Float?
+  resultNotes        String?
+  alertTriggered     Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+
+  deployment  Deployment    @relation(fields: [deploymentId], references: [id])
+  guard       User          @relation("SpotCheckGuard", fields: [guardId], references: [id])
+  performedBy User          @relation("SpotCheckPerformer", fields: [performedById], references: [id])
+  charges     GuardCharge[]
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([guardId])
+  @@index([deploymentId])
+  @@index([performedById])
+  @@index([createdAt])
+}
+
+model GuardCharge {
+  id                String   @id @default(uuid())
+  guardId           String
+  spotCheckId       String?
+  raisedById        String
+  chargeCategory    String // ABSENCE_FROM_POST, UNIFORM_VIOLATION, INSUBORDINATION, SLEEPING_ON_DUTY, INTOXICATION, PERSONAL_DEVICE, OTHER
+  chargeDescription String
+  severityLevel     String // MINOR, MODERATE, SERIOUS
+  status            String   @default("OPEN") // OPEN, UNDER_INVESTIGATION, DISCIPLINARY_ACTION_TAKEN, RESOLVED, DISMISSED
+  statusNotes       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  guard     User       @relation("ChargeGuard", fields: [guardId], references: [id])
+  raisedBy  User       @relation("ChargeRaiser", fields: [raisedById], references: [id])
+  spotCheck SpotCheck? @relation(fields: [spotCheckId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([guardId])
+  @@index([status])
+}
+
+model DeploymentVoid {
+  id                String   @id @default(uuid())
+  deploymentId      String   @unique
+  initiatedById     String
+  approvedById      String?
+  voidReason        String // FAILED_SPOT_CHECK, GUARD_NOT_FOUND, BIOMETRIC_FRAUD, ADMIN_ERROR, OTHER
+  voidJustification String
+  evidenceRef       String? // Spot check ID or uploaded doc
+  status            String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  decisionNote      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  deployment  Deployment @relation(fields: [deploymentId], references: [id])
+  initiatedBy User       @relation("VoidInitiator", fields: [initiatedById], references: [id])
+  approvedBy  User?      @relation("VoidApprover", fields: [approvedById], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([deploymentId])
+  @@index([status])
+}
+
+// ============================================================
+// FOOD SUPPLIER MODULE
+// ============================================================
+
+model FoodSupplierAccount {
+  id            String   @id @default(uuid())
+  userId        String   @unique // The food supplier's User account
+  supplierName  String
+  contactPerson String
+  contactPhone  String
+  contactEmail  String?
+  contractRef   String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  supplierSites FoodSupplierSite[]
+  deliveries    MealDelivery[]
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([userId])
+}
+
+model FoodSupplierSite {
+  id                    String  @id @default(uuid())
+  foodSupplierAccountId String
+  siteId                String
+  mealPricePerPerson    Float   @default(0)
+  mealPeriods           String  @default("BOTH") // LUNCH, SUPPER, BOTH
+  isActive              Boolean @default(true)
+
+  supplierAccount FoodSupplierAccount @relation(fields: [foodSupplierAccountId], references: [id])
+  site            Site                @relation(fields: [siteId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([foodSupplierAccountId, siteId])
+}
+
+model MealDelivery {
+  id                    String    @id @default(uuid())
+  foodSupplierAccountId String
+  siteId                String
+  shiftType             String // DAY, NIGHT
+  mealPeriod            String // LUNCH, SUPPER
+  sessionDate           DateTime
+  sessionStart          DateTime
+  sessionEnd            DateTime?
+  totalGuardsOnDuty     Int       @default(0)
+  totalMealsVerified    Int       @default(0)
+  totalRejected         Int       @default(0)
+  mealPricePerPerson    Float
+  totalMealCost         Float     @default(0)
+  financeNotified       Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+
+  supplierAccount FoodSupplierAccount @relation(fields: [foodSupplierAccountId], references: [id])
+  site            Site                @relation(fields: [siteId], references: [id])
+  verifications   MealVerification[]
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([siteId])
+  @@index([sessionDate])
+}
+
+model MealVerification {
+  id             String   @id @default(uuid())
+  mealDeliveryId String
+  guardId        String
+  result         String // VERIFIED, REJECTED
+  timestamp      DateTime @default(now())
+
+  mealDelivery MealDelivery @relation(fields: [mealDeliveryId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([mealDeliveryId])
+  @@index([guardId])
+}
+
+// ============================================================
+// CHAT & COMMUNICATION MODULE
+// ============================================================
+
+model Conversation {
+  id            String    @id @default(uuid())
+  type          String    @default("DIRECT") // DIRECT, GROUP, SITE, INCIDENT, DEPLOYMENT, BROADCAST
+  name          String?
+  description   String?
+  createdById   String
+  siteId        String?
+  incidentId    String?
+  deploymentId  String?
+  isActive      Boolean   @default(true)
+  lastMessageAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([type])
+  @@index([siteId])
+  @@index([incidentId])
+  @@index([deploymentId])
+  @@index([lastMessageAt])
+  @@index([createdById])
+}
+
+model ConversationParticipant {
+  id             String    @id @default(uuid())
+  conversationId String
+  userId         String
+  role           String    @default("MEMBER") // ADMIN, MEMBER
+  joinedAt       DateTime  @default(now())
+  leftAt         DateTime?
+  isMuted        Boolean   @default(false)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@index([conversationId])
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  messageType    String   @default("TEXT") // TEXT, IMAGE, SYSTEM
+  mediaUrl       String?
+  replyToId      String?
+  isEdited       Boolean  @default(false)
+  isDeleted      Boolean  @default(false)
+  offlineId      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  conversation Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  readReceipts MessageReadStatus[]
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@index([offlineId])
+}
+
+model MessageReadStatus {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@index([messageId])
+}
+
+// ============================================================
+// NOTIFICATIONS AND AUDIT
+// ============================================================
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("INFO") // ALERT, INFO, WARNING
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String // CREATE, UPDATE, DELETE, LOGIN, APPROVE, REJECT, VOID
+  entity    String
+  entityId  String
+  metadata  String?
+  timestamp DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([timestamp])
+}
+
+model SubscriptionPlan {
+  id            String   @id @default(uuid())
+  name          String // e.g., Starter, Professional, Enterprise
+  pricePerMonth Float
+  maxGuards     Int? // null means unlimited
+  maxSites      Int?
+  features      String // JSON array of feature flags
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenants Tenant[]
+}
