@@ -11,6 +11,11 @@ const getApiBase = () => {
       return `${protocol}//${hostname}:3001/api`;
     }
 
+    console.warn(
+      'NEXT_PUBLIC_API_URL is not configured. Falling back to frontend origin /api. ' +
+      'This is only correct if the backend is proxied through the same hostname.',
+    );
+
     const origin = port ? `${protocol}//${hostname}:${port}` : `${protocol}//${hostname}`;
     return `${origin}/api`;
   }

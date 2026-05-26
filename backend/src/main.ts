@@ -8,6 +8,14 @@ import { existsSync, mkdirSync } from 'fs';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Handle root health checks before the API global prefix.
+  app.use('/', (req, res, next) => {
+    if (req.method === 'GET' && req.path === '/') {
+      return res.json({ status: 'ok', service: 'ddbms-backend' });
+    }
+    next();
+  });
+
   // Global prefix
   app.setGlobalPrefix('api');
 
