@@ -24,6 +24,8 @@ export class SpotCheckService {
       throw new NotFoundException('No active deployment found for this guard');
     }
 
+    const manualStatus = data.status || 'PRESENT';
+
     // Simulate biometric verification: compare provided PIN with stored
     let biometricResult = 'FAIL';
     if (data.biometricPin) {
@@ -37,6 +39,8 @@ export class SpotCheckService {
       }
     }
 
+    const alertTriggered = biometricResult === 'FAIL' || manualStatus !== 'PRESENT';
+
     const spotCheck = await this.prisma.spotCheck.create({
       data: {
         guardId: deployment.guardId,
@@ -49,8 +53,8 @@ export class SpotCheckService {
         biometricResult,
         gpsLat: data.gpsLat,
         gpsLng: data.gpsLng,
-        resultNotes: data.resultNotes,
-        alertTriggered: biometricResult === 'FAIL',
+        resultNotes: data.resultNotes || `Manual status ${manualStatus} recorded`,
+        alertTriggered,
       },
       include: {
         guard: { select: { id: true, name: true, staffId: true } },
@@ -80,18 +84,31 @@ export class SpotCheckService {
     return spotCheck;
   }
 
-  async raiseCharge(spotCheckId: string, data: any, raisedById: string) {
-    const spotCheck = await this.prisma.spotCheck.findUnique({ where: { id: spotCheckId } });
-    if (!spotCheck) throw new NotFoundException('Spot check not found');
+  async raiseCharge(spotCheckId: string | undefined, data: any, raisedById: string) {
+    const guardId = data.guardId || data.userId;
+    if (!guardId) throw new NotFoundException('Guard not found');
+
+    let resolvedSpotCheckId = spotCheckId;
+    if (!resolvedSpotCheckId) {
+      const latestSpotCheck = await this.prisma.spotCheck.findFirst({
+        where: { guardId },
+        orderBy: { createdAt: 'desc' },
+      });
+      resolvedSpotCheckId = latestSpotCheck?.id;
+    }
+
+    const spotCheck = resolvedSpotCheckId
+      ? await this.prisma.spotCheck.findUnique({ where: { id: resolvedSpotCheckId } })
+      : null;
 
     const charge = await this.prisma.guardCharge.create({
       data: {
-        guardId: spotCheck.guardId,
-        spotCheckId,
+        guardId,
+        spotCheckId: resolvedSpotCheckId || undefined,
         raisedById,
-        chargeCategory: data.chargeCategory,
-        chargeDescription: data.chargeDescription,
-        severityLevel: data.severityLevel,
+        chargeCategory: data.chargeCategory || data.type || 'DISCIPLINARY',
+        chargeDescription: data.chargeDescription || data.description,
+        severityLevel: data.severityLevel || data.severity || 'MEDIUM',
       },
       include: { guard: { select: { id: true, name: true } }, raisedBy: { select: { name: true } } },
     });
@@ -114,7 +131,7 @@ export class SpotCheckService {
     // Also notify the guard themselves
     await this.prisma.notification.create({
       data: {
-        userId: spotCheck.guardId,
+        userId: spotCheck?.guardId || guardId,
         title: 'Formal Charge Raised Against You',
         message: `A ${data.severityLevel} charge has been raised: ${data.chargeDescription}. Please contact HR.`,
         type: 'ALERT',

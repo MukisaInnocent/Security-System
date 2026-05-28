@@ -24,6 +24,11 @@ export class SpotCheckController {
     return this.spotCheckService.performSpotCheck(body, req.user.id);
   }
 
+  @Post('charges')
+  raiseChargeFromBody(@Body() body: any, @Req() req: any) {
+    return this.spotCheckService.raiseCharge(body.spotCheckId, body, req.user.id);
+  }
+
   @Post(':id/charge')
   raiseCharge(@Param('id') id: string, @Body() body: any, @Req() req: any) {
     return this.spotCheckService.raiseCharge(id, body, req.user.id);

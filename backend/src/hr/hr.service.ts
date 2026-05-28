@@ -35,15 +35,43 @@ export class HrService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    if (data.biometricPin) {
-      data.biometricPin = await bcrypt.hash(data.biometricPin, 10);
-      data.biometricEnrolled = true;
+    let emergencyContacts: any[] = [];
+    if (Array.isArray(data.nextOfKin)) {
+      emergencyContacts = data.nextOfKin;
+    } else if (typeof data.nextOfKin === 'string') {
+      try {
+        const parsed = JSON.parse(data.nextOfKin);
+        emergencyContacts = Array.isArray(parsed) ? parsed : [parsed];
+      } catch {
+        emergencyContacts = [];
+      }
+    } else if (typeof user.emergencyContact === 'string') {
+      try {
+        const parsed = JSON.parse(user.emergencyContact);
+        emergencyContacts = Array.isArray(parsed) ? parsed : [parsed];
+      } catch {
+        emergencyContacts = [];
+      }
+    }
+
+    if (emergencyContacts.length > 0) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { emergencyContact: JSON.stringify(emergencyContacts) },
+      });
+    }
+
+    const { nextOfKin, references, bankDetails, paymentMode, mobileMoneyNumber, ...guardProfileData } = data;
+
+    if (guardProfileData.biometricPin) {
+      guardProfileData.biometricPin = await bcrypt.hash(guardProfileData.biometricPin, 10);
+      guardProfileData.biometricEnrolled = true;
     }
 
     return this.prisma.guardProfile.upsert({
       where: { userId },
-      create: { userId, ...data },
-      update: data,
+      create: { userId, ...guardProfileData },
+      update: guardProfileData,
     });
   }
 

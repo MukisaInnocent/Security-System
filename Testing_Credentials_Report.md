@@ -1,6 +1,8 @@
 # DDBMS v1.1.4: Testing Credentials Report
 ## System Access and Role-Based Simulation Data
 
+> **Important:** These credentials are demo-only values for local development and staging use. They should not be reused in production environments.
+
 This report contains a catalog of all pre-configured testing accounts and biometric credentials available in the DDBMS ecosystem for staging and demonstration purposes.
 
 ---
@@ -64,6 +66,8 @@ For any action requiring biometric proof (Check-In, Check-Out, Spot Checks), the
 ---
 
 ### 6. Technical Usage Note
-All passwords are encrypted using **bcrypt** (salt rounds: 10) on the backend. The above credentials represent the plain-text values used during the `npm run seed` process. 
+All passwords are encrypted using **bcrypt** (salt rounds: 10) on the backend. The values above are the plain-text demo credentials used when seeding local data, typically through the backend seed workflow (`npm run prisma:seed`).
 
-**Staging Environment**: `PORT 3000` (Frontend) / `PORT 3001` (Backend)
+**Local Environment**: Frontend runs on `http://localhost:3000`, backend on `http://localhost:3001`.
+
+**Security note**: Reset or replace these accounts before any production or shared environment use.
