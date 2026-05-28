@@ -36,7 +36,6 @@ async function main() {
   await prisma.auditLog.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.clientSite.deleteMany();
-  await prisma.attendance.deleteMany();
   await prisma.incident.deleteMany();
   await prisma.deployment.deleteMany();
   await prisma.post.deleteMany();
@@ -265,7 +264,7 @@ async function main() {
 
   // === HISTORICAL DATA (30 days) ===
   const now = new Date();
-  let totalDep = 0, totalAtt = 0, totalInc = 0;
+  let totalDep = 0, totalInc = 0;
   const severities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
   const categories = ['TRESPASS', 'THEFT', 'MEDICAL', 'SUSPICIOUS_ACTIVITY', 'OTHER'];
   const incidentDescs = [
@@ -325,13 +324,12 @@ async function main() {
         const signOutTime = new Date(date);
         signOutTime.setHours(eh < sh ? eh + 24 : eh, Math.floor(Math.random() * 15), 0, 0);
 
-        await prisma.attendance.create({
-          data: { guardId: guards[shift.guardIdx].id, siteId: sites[shift.siteIdx].id, deploymentId: deployment.id, type: 'CHECK_IN', timestamp: signInTime, latitude: sites[shift.siteIdx].latitude, longitude: sites[shift.siteIdx].longitude, isWithinGeofence: true, biometricVerified: true },
+        await prisma.spotCheck.create({
+          data: { guardId: guards[shift.guardIdx].id, siteId: sites[shift.siteIdx].id, deploymentId: deployment.id, shiftType: shift.shiftType, performedById: admin.id, biometricResult: 'PASS', resultNotes: 'Simulated check-in', gpsLat: sites[shift.siteIdx].latitude, gpsLng: sites[shift.siteIdx].longitude, createdAt: signInTime },
         });
-        await prisma.attendance.create({
-          data: { guardId: guards[shift.guardIdx].id, siteId: sites[shift.siteIdx].id, deploymentId: deployment.id, type: 'CHECK_OUT', timestamp: signOutTime, latitude: sites[shift.siteIdx].latitude, longitude: sites[shift.siteIdx].longitude, isWithinGeofence: true, biometricVerified: true },
+        await prisma.spotCheck.create({
+          data: { guardId: guards[shift.guardIdx].id, siteId: sites[shift.siteIdx].id, deploymentId: deployment.id, shiftType: shift.shiftType, performedById: admin.id, biometricResult: 'PASS', resultNotes: 'Simulated check-out', gpsLat: sites[shift.siteIdx].latitude, gpsLng: sites[shift.siteIdx].longitude, createdAt: signOutTime },
         });
-        totalAtt += 2;
       }
     }
 
@@ -362,7 +360,7 @@ async function main() {
       totalInc++;
     }
   }
-  console.log(`✅ Historical data: ${totalDep} deployments, ${totalAtt} attendance, ${totalInc} incidents`);
+  console.log(`✅ Historical data: ${totalDep} deployments, ${totalInc} incidents`);
 
   // === LEAVE REQUESTS ===
   await prisma.leaveRequest.create({
