@@ -21,7 +21,7 @@ export class HrService {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
-        guardProfile: true,
+        guardProfile: { include: { nextOfKins: true } },
         deployments: { where: { status: 'COMPLETED' }, orderBy: { date: 'desc' }, take: 10 },
         leaveRequests: { orderBy: { createdAt: 'desc' }, take: 5 },
         chargesReceived: { orderBy: { createdAt: 'desc' }, take: 5 },
@@ -35,32 +35,6 @@ export class HrService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    let emergencyContacts: any[] = [];
-    if (Array.isArray(data.nextOfKin)) {
-      emergencyContacts = data.nextOfKin;
-    } else if (typeof data.nextOfKin === 'string') {
-      try {
-        const parsed = JSON.parse(data.nextOfKin);
-        emergencyContacts = Array.isArray(parsed) ? parsed : [parsed];
-      } catch {
-        emergencyContacts = [];
-      }
-    } else if (typeof user.emergencyContact === 'string') {
-      try {
-        const parsed = JSON.parse(user.emergencyContact);
-        emergencyContacts = Array.isArray(parsed) ? parsed : [parsed];
-      } catch {
-        emergencyContacts = [];
-      }
-    }
-
-    if (emergencyContacts.length > 0) {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { emergencyContact: JSON.stringify(emergencyContacts) },
-      });
-    }
-
     const { nextOfKin, references, bankDetails, paymentMode, mobileMoneyNumber, ...guardProfileData } = data;
 
     if (guardProfileData.biometricPin) {
@@ -68,10 +42,29 @@ export class HrService {
       guardProfileData.biometricEnrolled = true;
     }
 
-    return this.prisma.guardProfile.upsert({
+    const profile = await this.prisma.guardProfile.upsert({
       where: { userId },
       create: { userId, ...guardProfileData },
       update: guardProfileData,
+    });
+
+    if (Array.isArray(nextOfKin) && nextOfKin.length > 0) {
+      await this.prisma.nextOfKin.deleteMany({ where: { guardProfileId: profile.id } });
+      await this.prisma.nextOfKin.createMany({
+        data: nextOfKin.map((nok: any) => ({
+          guardProfileId: profile.id,
+          name: nok.name || 'Unknown',
+          phone: nok.phone,
+          relationship: nok.relationship,
+          address: nok.address,
+          nin: nok.nin,
+        })),
+      });
+    }
+
+    return this.prisma.guardProfile.findUnique({
+      where: { id: profile.id },
+      include: { nextOfKins: true },
     });
   }
 

@@ -10,10 +10,10 @@ export class AnalyticsService {
     startDate.setDate(startDate.getDate() - days);
     startDate.setHours(0, 0, 0, 0);
 
-    const records = await this.prisma.attendance.findMany({
-      where: { timestamp: { gte: startDate } },
-      select: { timestamp: true, type: true, isWithinGeofence: true },
-      orderBy: { timestamp: 'asc' },
+    const records = await this.prisma.spotCheck.findMany({
+      where: { createdAt: { gte: startDate } },
+      select: { createdAt: true, checkInTime: true, checkOutTime: true, isPresent: true },
+      orderBy: { createdAt: 'asc' },
     });
 
     // Group by date
@@ -27,13 +27,13 @@ export class AnalyticsService {
     }
 
     for (const r of records) {
-      const key = r.timestamp.toISOString().split('T')[0];
+      const key = r.createdAt.toISOString().split('T')[0];
       const entry = dailyMap.get(key);
       if (entry) {
         entry.total++;
-        if (r.type === 'CHECK_IN') entry.checkIns++;
-        else entry.checkOuts++;
-        if (r.isWithinGeofence) entry.withinGeofence++;
+        if (r.checkInTime) entry.checkIns++;
+        if (r.checkOutTime) entry.checkOuts++;
+        if (r.isPresent) entry.withinGeofence++; // Assuming presence equates to compliance for now
       }
     }
 
@@ -93,11 +93,11 @@ export class AnalyticsService {
         this.prisma.deployment.count({
           where: { guardId: guard.id, date: { gte: thirtyDaysAgo } },
         }),
-        this.prisma.attendance.count({
-          where: { guardId: guard.id, type: 'CHECK_IN', timestamp: { gte: thirtyDaysAgo } },
+        this.prisma.spotCheck.count({
+          where: { guardId: guard.id, createdAt: { gte: thirtyDaysAgo }, checkInTime: { not: null } },
         }),
-        this.prisma.attendance.count({
-          where: { guardId: guard.id, type: 'CHECK_IN', timestamp: { gte: thirtyDaysAgo }, isWithinGeofence: true },
+        this.prisma.spotCheck.count({
+          where: { guardId: guard.id, createdAt: { gte: thirtyDaysAgo }, checkInTime: { not: null } },
         }),
         this.prisma.incident.count({
           where: { reportedById: guard.id, createdAt: { gte: thirtyDaysAgo } },
@@ -133,8 +133,8 @@ export class AnalyticsService {
         this.prisma.deployment.count({
           where: { siteId: site.id, date: { gte: thirtyDaysAgo } },
         }),
-        this.prisma.attendance.count({
-          where: { siteId: site.id, timestamp: { gte: thirtyDaysAgo } },
+        this.prisma.spotCheck.count({
+          where: { siteId: site.id, createdAt: { gte: thirtyDaysAgo }, checkInTime: { not: null } },
         }),
         this.prisma.incident.count({
           where: { siteId: site.id, createdAt: { gte: thirtyDaysAgo } },
@@ -161,13 +161,12 @@ export class AnalyticsService {
     const end = endDate ? new Date(endDate) : new Date();
 
     if (type === 'attendance') {
-      return this.prisma.attendance.findMany({
-        where: { timestamp: { gte: start, lte: end } },
+      return this.prisma.spotCheck.findMany({
+        where: { createdAt: { gte: start, lte: end } },
         include: {
           guard: { select: { name: true, email: true } },
-          site: { select: { name: true } },
         },
-        orderBy: { timestamp: 'desc' },
+        orderBy: { createdAt: 'desc' },
       });
     }
 

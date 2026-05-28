@@ -12,13 +12,13 @@ export class DashboardService {
     const todayEnd = new Date(now);
     todayEnd.setHours(23, 59, 59, 999);
 
-    const todayCheckIns = await this.prisma.attendance.findMany({
-      where: { type: 'CHECK_IN', timestamp: { gte: todayStart, lte: todayEnd } },
+    const todayCheckIns = await this.prisma.spotCheck.findMany({
+      where: { checkInTime: { not: null }, createdAt: { gte: todayStart, lte: todayEnd } },
       select: { guardId: true },
     });
 
-    const todayCheckOuts = await this.prisma.attendance.findMany({
-      where: { type: 'CHECK_OUT', timestamp: { gte: todayStart, lte: todayEnd } },
+    const todayCheckOuts = await this.prisma.spotCheck.findMany({
+      where: { checkOutTime: { not: null }, createdAt: { gte: todayStart, lte: todayEnd } },
       select: { guardId: true },
     });
 
@@ -37,8 +37,8 @@ export class DashboardService {
       }),
     ]);
 
-    const todayAttendance = await this.prisma.attendance.count({
-      where: { timestamp: { gte: todayStart, lte: todayEnd } },
+    const todayAttendance = await this.prisma.spotCheck.count({
+      where: { createdAt: { gte: todayStart, lte: todayEnd } },
     });
 
     const todayIncidents = await this.prisma.incident.count({
@@ -53,9 +53,9 @@ export class DashboardService {
       where: { status: { in: ['OPEN', 'INVESTIGATING'] } },
     });
 
-    const recentAttendance = await this.prisma.attendance.findMany({
+    const recentAttendance = await this.prisma.spotCheck.findMany({
       take: 10,
-      orderBy: { timestamp: 'desc' },
+      orderBy: { createdAt: 'desc' },
       include: {
         guard: { select: { id: true, name: true } },
         site: { select: { id: true, name: true } },
@@ -71,10 +71,10 @@ export class DashboardService {
       },
     });
 
-    const withinGeofence = await this.prisma.attendance.count({
+    const withinGeofence = await this.prisma.spotCheck.count({
       where: {
-        timestamp: { gte: todayStart, lte: todayEnd },
-        isWithinGeofence: true,
+        createdAt: { gte: todayStart, lte: todayEnd },
+        isPresent: true,
       },
     });
 
@@ -82,9 +82,9 @@ export class DashboardService {
     const sevenDaysAgo = new Date(now);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const weeklyAttendance = await this.prisma.attendance.findMany({
-      where: { timestamp: { gte: sevenDaysAgo }, type: 'CHECK_IN' },
-      select: { timestamp: true },
+    const weeklyAttendance = await this.prisma.spotCheck.findMany({
+      where: { createdAt: { gte: sevenDaysAgo }, checkInTime: { not: null } },
+      select: { createdAt: true },
     });
 
     const weeklyTrend = Array.from({ length: 7 }, (_, i) => {
@@ -93,7 +93,7 @@ export class DashboardService {
       const dateStr = d.toISOString().split('T')[0];
       return {
         date: dateStr,
-        count: weeklyAttendance.filter(a => a.timestamp.toISOString().split('T')[0] === dateStr).length,
+        count: weeklyAttendance.filter(a => a.createdAt.toISOString().split('T')[0] === dateStr).length,
       };
     });
 
@@ -136,20 +136,20 @@ export class DashboardService {
     });
 
     // Today's attendance
-    const todayAttendance = await this.prisma.attendance.findMany({
-      where: { guardId, timestamp: { gte: todayStart, lte: todayEnd } },
+    const todayAttendance = await this.prisma.spotCheck.findMany({
+      where: { guardId, createdAt: { gte: todayStart, lte: todayEnd } },
       include: { site: { select: { name: true } } },
-      orderBy: { timestamp: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
 
     // Last 7 days attendance
     const sevenDaysAgo = new Date(now);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const recentHistory = await this.prisma.attendance.findMany({
-      where: { guardId, timestamp: { gte: sevenDaysAgo } },
+    const recentHistory = await this.prisma.spotCheck.findMany({
+      where: { guardId, createdAt: { gte: sevenDaysAgo } },
       include: { site: { select: { name: true } } },
-      orderBy: { timestamp: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 20,
     });
 
@@ -167,7 +167,7 @@ export class DashboardService {
 
     const [totalShifts, totalCheckIns, reportedIncidents] = await Promise.all([
       this.prisma.deployment.count({ where: { guardId, date: { gte: thirtyDaysAgo } } }),
-      this.prisma.attendance.count({ where: { guardId, type: 'CHECK_IN', timestamp: { gte: thirtyDaysAgo } } }),
+      this.prisma.spotCheck.count({ where: { guardId, checkInTime: { not: null }, createdAt: { gte: thirtyDaysAgo } } }),
       this.prisma.incident.count({ where: { reportedById: guardId, createdAt: { gte: thirtyDaysAgo } } }),
     ]);
 
@@ -238,25 +238,25 @@ export class DashboardService {
       include: {
         guard: { select: { id: true, name: true, phone: true } },
         site: { select: { id: true, name: true, latitude: true, longitude: true } },
-        attendances: {
-          where: { timestamp: { gte: todayStart, lte: todayEnd } },
-          orderBy: { timestamp: 'desc' },
+        spotChecks: {
+          where: { createdAt: { gte: todayStart, lte: todayEnd } },
+          orderBy: { createdAt: 'desc' },
         },
       },
       orderBy: { shiftStart: 'asc' },
     });
 
     // Guards with anomalies (checked in outside geofence today)
-    const anomalies = await this.prisma.attendance.findMany({
+    const anomalies = await this.prisma.spotCheck.findMany({
       where: {
-        timestamp: { gte: todayStart, lte: todayEnd },
-        isWithinGeofence: false,
+        createdAt: { gte: todayStart, lte: todayEnd },
+        isPresent: false,
       },
       include: {
         guard: { select: { id: true, name: true } },
         site: { select: { id: true, name: true } },
       },
-      orderBy: { timestamp: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
 
     // Active incidents (open + investigating)
@@ -277,13 +277,13 @@ export class DashboardService {
       select: { id: true, name: true, phone: true },
     });
 
-    const todayCheckIns = await this.prisma.attendance.findMany({
-      where: { type: 'CHECK_IN', timestamp: { gte: todayStart, lte: todayEnd } },
+    const todayCheckIns = await this.prisma.spotCheck.findMany({
+      where: { checkInTime: { not: null }, createdAt: { gte: todayStart, lte: todayEnd } },
       select: { guardId: true },
     });
 
-    const todayCheckOuts = await this.prisma.attendance.findMany({
-      where: { type: 'CHECK_OUT', timestamp: { gte: todayStart, lte: todayEnd } },
+    const todayCheckOuts = await this.prisma.spotCheck.findMany({
+      where: { checkOutTime: { not: null }, createdAt: { gte: todayStart, lte: todayEnd } },
       select: { guardId: true },
     });
 
@@ -346,13 +346,13 @@ export class DashboardService {
     const siteIds = clientSites.map(cs => cs.siteId);
 
     // Attendance for client's sites
-    const recentAttendance = await this.prisma.attendance.findMany({
-      where: { siteId: { in: siteIds }, timestamp: { gte: todayStart, lte: todayEnd } },
+    const recentAttendance = await this.prisma.spotCheck.findMany({
+      where: { siteId: { in: siteIds }, createdAt: { gte: todayStart, lte: todayEnd } },
       include: {
         guard: { select: { name: true } },
         site: { select: { name: true } },
       },
-      orderBy: { timestamp: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 20,
     });
 
@@ -369,8 +369,8 @@ export class DashboardService {
 
     // Monthly stats
     const [monthlyAttendance, monthlyIncidents, activeGuards] = await Promise.all([
-      this.prisma.attendance.count({
-        where: { siteId: { in: siteIds }, timestamp: { gte: thirtyDaysAgo }, type: 'CHECK_IN' },
+      this.prisma.spotCheck.count({
+        where: { siteId: { in: siteIds }, createdAt: { gte: thirtyDaysAgo }, checkInTime: { not: null } },
       }),
       this.prisma.incident.count({
         where: { siteId: { in: siteIds }, createdAt: { gte: thirtyDaysAgo } },
@@ -382,12 +382,12 @@ export class DashboardService {
       }),
     ]);
 
-    const withinGeofence = await this.prisma.attendance.count({
-      where: { siteId: { in: siteIds }, timestamp: { gte: thirtyDaysAgo }, isWithinGeofence: true },
+    const withinGeofence = await this.prisma.spotCheck.count({
+      where: { siteId: { in: siteIds }, createdAt: { gte: thirtyDaysAgo }, isPresent: true },
     });
 
-    const totalMonthlyAtt = await this.prisma.attendance.count({
-      where: { siteId: { in: siteIds }, timestamp: { gte: thirtyDaysAgo } },
+    const totalMonthlyAtt = await this.prisma.spotCheck.count({
+      where: { siteId: { in: siteIds }, createdAt: { gte: thirtyDaysAgo } },
     });
 
     const invoices = await this.prisma.invoice.findMany({

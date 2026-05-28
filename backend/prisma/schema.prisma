@@ -34,7 +34,6 @@ model Tenant {
   LeaveRequest            LeaveRequest[]
   Post                    Post[]
   Deployment              Deployment[]
-  Attendance              Attendance[]
   WeaponRecord            WeaponRecord[]
   WeaponIssuance          WeaponIssuance[]
   AmmunitionStock         AmmunitionStock[]
@@ -44,6 +43,7 @@ model Tenant {
   OrderItem               OrderItem[]
   AssetDistribution       AssetDistribution[]
   SiteInventory           SiteInventory[]
+  OvertimeRecord          OvertimeRecord[]
   Contract                Contract[]
   ContractSite            ContractSite[]
   Invoice                 Invoice[]
@@ -113,7 +113,6 @@ model User {
   guardProfile             GuardProfile?
   deployments              Deployment[]           @relation("GuardDeployments")
   supervisedDeployments    Deployment[]           @relation("SupervisorDeployments")
-  attendances              Attendance[]
   incidents                Incident[]             @relation("ReportedIncidents")
   assignedIncidents        Incident[]             @relation("AssignedIncidents")
   resolvedIncidents        Incident[]             @relation("ResolvedIncidents")
@@ -122,6 +121,8 @@ model User {
   clientSites              ClientSite[]
   leaveRequests            LeaveRequest[]         @relation("GuardLeaveRequests")
   approvedLeaveRequests    LeaveRequest[]         @relation("ApproverLeaveRequests")
+  overtimeRecords          OvertimeRecord[]       @relation("GuardOvertime")
+  approvedOvertime         OvertimeRecord[]       @relation("SupervisorOvertime")
   weaponIssuances          WeaponIssuance[]       @relation("GuardWeaponIssuances")
   supervisedIssuances      WeaponIssuance[]       @relation("SupervisorIssuances")
   armouryReturns           WeaponIssuance[]       @relation("ArmouryOfficerReturns")
@@ -160,12 +161,19 @@ model GuardProfile {
   primaryPostId       String? // Permanent post
   primaryShift        String? // DAY or NIGHT
   isPermanent         Boolean   @default(false)
+  nin                 String?
+  village             String?
+  parish              String?
+  subCounty           String?
+  county              String?
+  district            String?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  user        User  @relation(fields: [userId], references: [id])
-  primarySite Site? @relation("PrimaryGuardSite", fields: [primarySiteId], references: [id])
-  primaryPost Post? @relation("PrimaryGuardPost", fields: [primaryPostId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+  primarySite Site?       @relation("PrimaryGuardSite", fields: [primarySiteId], references: [id])
+  primaryPost Post?       @relation("PrimaryGuardPost", fields: [primaryPostId], references: [id])
+  nextOfKin   NextOfKin[]
 
   tenantId String?
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
@@ -198,6 +206,48 @@ model LeaveRequest {
   @@index([startDate])
 }
 
+model NextOfKin {
+  id           String   @id @default(uuid())
+  guardId      String
+  name         String
+  phone        String
+  nin          String?
+  village      String?
+  parish       String?
+  subCounty    String?
+  county       String?
+  district     String?
+  relationship String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  guard GuardProfile @relation(fields: [guardId], references: [id])
+
+  @@index([guardId])
+}
+
+model OvertimeRecord {
+  id           String   @id @default(uuid())
+  guardId      String
+  siteId       String
+  supervisorId String?
+  date         DateTime
+  hours        Float
+  status       String   @default("PENDING") // PENDING, APPROVED, PAID
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  guard      User    @relation("GuardOvertime", fields: [guardId], references: [id])
+  supervisor User?   @relation("SupervisorOvertime", fields: [supervisorId], references: [id])
+  site       Site    @relation(fields: [siteId], references: [id])
+  tenantId   String?
+  tenant     Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([guardId])
+  @@index([siteId])
+}
+
 // ============================================================
 // SITE AND POST MODELS
 // ============================================================
@@ -220,11 +270,12 @@ model Site {
   region            Region?            @relation(fields: [regionId], references: [id])
   tenant            Tenant?            @relation(fields: [tenantId], references: [id])
   deployments       Deployment[]
-  attendances       Attendance[]
   incidents         Incident[]
   clientSites       ClientSite[]
+  overtimeRecords   OvertimeRecord[]
   posts             Post[]
   primaryGuards     GuardProfile[]     @relation("PrimaryGuardSite")
+  spotChecks        SpotCheck[]
   weaponIssuances   WeaponIssuance[]
   ammunitionStocks  AmmunitionStock[]
   siteInventory     SiteInventory[]
@@ -294,7 +345,6 @@ model Deployment {
   supervisor     User?           @relation("SupervisorDeployments", fields: [supervisorId], references: [id])
   site           Site            @relation(fields: [siteId], references: [id])
   post           Post?           @relation(fields: [postId], references: [id])
-  attendances    Attendance[]
   weaponIssuance WeaponIssuance?
   spotChecks     SpotCheck[]
   voidRecord     DeploymentVoid?
@@ -308,34 +358,6 @@ model Deployment {
   @@index([date])
   @@index([status])
   @@index([shiftType])
-}
-
-model Attendance {
-  id                String   @id @default(uuid())
-  guardId           String
-  siteId            String
-  deploymentId      String?
-  type              String // CHECK_IN, CHECK_OUT
-  timestamp         DateTime @default(now())
-  latitude          Float
-  longitude         Float
-  isWithinGeofence  Boolean  @default(false)
-  biometricVerified Boolean  @default(false)
-  syncedFromOffline Boolean  @default(false)
-  offlineId         String?
-  createdAt         DateTime @default(now())
-
-  guard      User        @relation(fields: [guardId], references: [id])
-  site       Site        @relation(fields: [siteId], references: [id])
-  deployment Deployment? @relation(fields: [deploymentId], references: [id])
-
-  tenantId String?
-  tenant   Tenant? @relation(fields: [tenantId], references: [id])
-
-  @@index([guardId])
-  @@index([siteId])
-  @@index([timestamp])
-  @@index([offlineId])
 }
 
 // ============================================================
@@ -827,10 +849,14 @@ model SpotCheck {
   gpsLat             Float?
   gpsLng             Float?
   resultNotes        String?
+  checkInTime        DateTime?
+  checkOutTime       DateTime?
+  isPresent          Boolean   @default(true)
   alertTriggered     Boolean   @default(false)
   createdAt          DateTime  @default(now())
 
   deployment  Deployment    @relation(fields: [deploymentId], references: [id])
+  site        Site?         @relation(fields: [siteId], references: [id])
   guard       User          @relation("SpotCheckGuard", fields: [guardId], references: [id])
   performedBy User          @relation("SpotCheckPerformer", fields: [performedById], references: [id])
   charges     GuardCharge[]
@@ -1128,23 +1154,23 @@ model SubscriptionPlan {
 }
 
 model DeploymentReport {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   reportDate      DateTime
-  reportType      String   // DAILY_COVERAGE, NIGHT_SHIFT
+  reportType      String // DAILY_COVERAGE, NIGHT_SHIFT
   siteId          String?
   regionId        String?
   generatedById   String
-  totalGuards     Int      @default(0)
-  deployedGuards  Int      @default(0)
-  coveragePercent Int      @default(0)
-  absentGuards    String?  // JSON
-  reportData      String?  // JSON
+  totalGuards     Int       @default(0)
+  deployedGuards  Int       @default(0)
+  coveragePercent Int       @default(0)
+  absentGuards    String? // JSON
+  reportData      String? // JSON
   scheduleSlot    String?
-  status          String   @default("GENERATED")
-  sentTo          String?  // JSON array of user IDs
+  status          String    @default("GENERATED")
+  sentTo          String? // JSON array of user IDs
   sentAt          DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   tenantId String?
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
@@ -1156,7 +1182,7 @@ model DeploymentReport {
 model PersonnelMovement {
   id            String   @id @default(uuid())
   guardId       String
-  movementType  String   // TRANSFER, SUSPENSION, TERMINATION, PROMOTION, DEMOTION, etc.
+  movementType  String // TRANSFER, SUSPENSION, TERMINATION, PROMOTION, DEMOTION, etc.
   fromSiteId    String?
   toSiteId      String?
   reason        String
@@ -1176,9 +1202,9 @@ model PersonnelMovement {
 }
 
 model ChangeSheet {
-  id                String   @id @default(uuid())
+  id                String    @id @default(uuid())
   guardId           String
-  changeType        String   // SALARY_ADJUSTMENT, BANK_DETAILS, CONTACT_INFO, MISCONDUCT_PENALTY
+  changeType        String // SALARY_ADJUSTMENT, BANK_DETAILS, CONTACT_INFO, MISCONDUCT_PENALTY
   reason            String
   amount            Float?
   evidence          String?
@@ -1186,11 +1212,11 @@ model ChangeSheet {
   serialOrBiometric String?
   previousValue     String?
   newValue          String?
-  status            String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  status            String    @default("PENDING") // PENDING, APPROVED, REJECTED
   approvedById      String?
   approvedAt        DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   tenantId String?
   tenant   Tenant? @relation(fields: [tenantId], references: [id])

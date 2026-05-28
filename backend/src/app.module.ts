@@ -8,7 +8,7 @@ import { TenantMiddleware } from './common/tenant/tenant.middleware';
 import { UsersModule } from './users/users.module';
 import { SitesModule } from './sites/sites.module';
 import { DeploymentsModule } from './deployments/deployments.module';
-import { AttendanceModule } from './attendance/attendance.module';
+
 import { IncidentsModule } from './incidents/incidents.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -28,6 +28,7 @@ import { ChatModule } from './chat/chat.module';
 import { ReportsModule } from './reports/reports.module';
 import { ChangeSheetsModule } from './change-sheets/change-sheets.module';
 import { PersonnelMovementsModule } from './personnel-movements/personnel-movements.module';
+import { GuardChargesModule } from './guard-charges/guard-charges.module';
 
 @Module({
   imports: [
@@ -41,7 +42,7 @@ import { PersonnelMovementsModule } from './personnel-movements/personnel-moveme
     UsersModule,
     SitesModule,
     DeploymentsModule,
-    AttendanceModule,
+
     IncidentsModule,
     DashboardModule,
     NotificationsModule,
@@ -61,6 +62,7 @@ import { PersonnelMovementsModule } from './personnel-movements/personnel-moveme
     ReportsModule,
     ChangeSheetsModule,
     PersonnelMovementsModule,
+    GuardChargesModule,
   ],
 })
 export class AppModule implements NestModule {
