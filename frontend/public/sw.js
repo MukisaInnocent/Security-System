@@ -10,7 +10,7 @@ if (typeof self !== 'undefined' && self.location.hostname === 'localhost') {
   throw new Error('Service Worker disabled on localhost');
 }
 
-const CACHE_NAME = 'secureguard-v2';
+const CACHE_NAME = 'wedeployed-v2';
 const STATIC_ASSETS = [
   '/',
   '/offline',
@@ -124,7 +124,7 @@ self.addEventListener('push', (event) => {
 
   const data = event.data.json();
   event.waitUntil(
-    self.registration.showNotification(data.title || 'SecureGuard Alert', {
+    self.registration.showNotification(data.title || 'wedeployed Alert', {
       body: data.message || '',
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',

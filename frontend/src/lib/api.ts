@@ -282,7 +282,7 @@ class ApiClient {
   async getReports(type?: string) { return this.fetch(`/reports${type ? `?type=${type}` : ''}`); }
   async getReportById(id: string) { return this.fetch(`/reports/${id}`); }
 
-  // === CHANGE SHEETS (URSB BRAP) ===
+  // === CHARGE SHEETS (URSB BRAP) ===
   async createChangeSheet(data: any) { return this.fetch('/change-sheets', { method: 'POST', body: JSON.stringify(data) }); }
   async getChangeSheets(guardId?: string, status?: string, changeType?: string) {
     const params = new URLSearchParams();

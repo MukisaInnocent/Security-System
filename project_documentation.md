@@ -113,7 +113,7 @@ graph TB
         FOOD_BE[Food Supplier]
         CHAT_BE[Chat + Gateway]
         RPT[Reports]
-        CS[Change Sheets]
+        CS[Charge Sheets]
         PM[Personnel Movements]
         SD[Special Duty]
     end
@@ -315,7 +315,7 @@ All registered in [app.module.ts](file:///c:/Users/USER/Music/security-system/ba
 |--------|-----------|------------------|------------|
 | **HR** | [hr/](file:///c:/Users/USER/Music/security-system/backend/src/hr) | 4.7 KB | `/api/hr` |
 | **Payroll** | [payroll/](file:///c:/Users/USER/Music/security-system/backend/src/payroll) | 6.2 KB | `/api/payroll` |
-| **Change Sheets** | [change-sheets/](file:///c:/Users/USER/Music/security-system/backend/src/change-sheets) | 1.9 KB | `/api/change-sheets` |
+| **Charge Sheets** | [change-sheets/](file:///c:/Users/USER/Music/security-system/backend/src/change-sheets) | 1.9 KB | `/api/change-sheets` |
 | **Personnel Movements** | [personnel-movements/](file:///c:/Users/USER/Music/security-system/backend/src/personnel-movements) | 2.7 KB | `/api/personnel-movements` |
 
 ### Asset & Supply Modules
@@ -541,7 +541,7 @@ WebSocket gateway: [chat.gateway.ts](file:///c:/Users/USER/Music/security-system
 | `GET` | `/api/reports` | List reports |
 | `GET` | `/api/reports/:id` | Report detail |
 
-### Change Sheets & Personnel Movements
+### Charge Sheets & Personnel Movements
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET/POST` | `/api/change-sheets` | List/Create |

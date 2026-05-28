@@ -1,4 +1,4 @@
-const DB_NAME = 'secureguard-offline';
+const DB_NAME = 'wedeployed-offline';
 const DB_VERSION = 2;
 
 interface OfflineRecord {

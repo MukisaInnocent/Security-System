@@ -1,6 +1,6 @@
 {
-  "name": "SecureGuard Pro",
-  "short_name": "SecureGuard",
+  "name": "wedeployed Pro",
+  "short_name": "wedeployed",
   "description": "Enterprise Digital Deployment & Security Management Platform",
   "start_url": "/",
   "display": "standalone",

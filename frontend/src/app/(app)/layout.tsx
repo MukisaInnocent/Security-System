@@ -40,7 +40,7 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
     { label: 'Leave Requests',path: '/hr/leave',        icon: <CalendarDays size={16} />, roles: ['ADMIN', 'HR', 'OPS_MANAGER'] },
     { label: 'Payroll',       path: '/hr/payroll',      icon: <Wallet size={16} />,       roles: ['ADMIN', 'CEO', 'FINANCE', 'HR'] },
     { label: 'Weapon Registry',path: '/hr/weapons',     icon: <Crosshair size={16} />,    roles: ['ADMIN', 'CEO', 'HR', 'ARMOURY_OFFICER'] },
-    { label: 'Change Sheets', path: '/hr/change-sheets',icon: <FilePenLine size={16} />,  roles: ['ADMIN', 'CEO', 'HR', 'OPS_MANAGER'] },
+    { label: 'Charge Sheets', path: '/hr/change-sheets',icon: <FilePenLine size={16} />,  roles: ['ADMIN', 'CEO', 'HR', 'OPS_MANAGER'] },
     { label: 'Movements',     path: '/hr/movements',    icon: <ArrowLeftRight size={16} />, roles: ['ADMIN', 'CEO', 'HR', 'OPS_MANAGER'] },
   ],
   assets: [

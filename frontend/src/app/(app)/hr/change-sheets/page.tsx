@@ -64,7 +64,7 @@ export default function ChangeSheetsPage() {
     <div className="animate-fade-in">
       <div className="page-header">
         <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <FilePenLine size={22} /> Change Sheets
+          <FilePenLine size={22} /> Charge Sheets
         </h1>
         <div className="page-header-actions" style={{ flexWrap: 'wrap' }}>
           <select className="input" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ width: '130px' }}>

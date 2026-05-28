@@ -47,7 +47,7 @@ async function main() {
 
   // === TENANT ===
   const tenant = await prisma.tenant.create({
-    data: { name: 'SecureGuard Operations Ltd', code: 'SGO-001', currency: 'UGX' },
+    data: { name: 'wedeployed Operations Ltd', code: 'SGO-001', currency: 'UGX' },
   });
   console.log(`✅ Tenant: ${tenant.name}`);
 
