@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
 export class GuardChargesService {
   constructor(private prisma: PrismaService) {}
 
-  async createCharge(raisedById: string, data: { guardId: string; chargeDetails: string; amount: number; evidenceUrl?: string }) {
+  async createCharge(raisedById: string, data: { guardId: string; chargeCategory: string; chargeDescription: string; severityLevel: string; amount: number; evidenceUrl?: string }) {
     return this.prisma.guardCharge.create({
       data: {
         raisedById,

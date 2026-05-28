@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Param, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Request, Param, Put, Patch } from '@nestjs/common';
 import { GuardChargesService } from './guard-charges.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 
 @Controller('guard-charges')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -11,7 +11,7 @@ export class GuardChargesController {
 
   @Post()
   @Roles('SUPERVISOR', 'OPERATIONS_MANAGER', 'ADMIN')
-  createCharge(@Request() req, @Body() body: { guardId: string; chargeDetails: string; amount: number; evidenceUrl?: string }) {
+  createCharge(@Request() req: any, @Body() body: { guardId: string; chargeCategory: string; chargeDescription: string; severityLevel: string; amount: number; evidenceUrl?: string }) {
     return this.guardChargesService.createCharge(req.user.id, body);
   }
 
@@ -23,19 +23,19 @@ export class GuardChargesController {
 
   @Get('my-charges')
   @Roles('GUARD')
-  getMyCharges(@Request() req) {
+  getMyCharges(@Request() req: any) {
     return this.guardChargesService.getChargesForGuard(req.user.id);
   }
 
   @Post(':id/confirm')
   @Roles('GUARD')
-  confirmCharge(@Param('id') id: string, @Request() req, @Body('pin') pin: string) {
+  confirmCharge(@Param('id') id: string, @Request() req: any, @Body('pin') pin: string) {
     return this.guardChargesService.confirmCharge(id, req.user.id, pin);
   }
 
   @Post(':id/void')
   @Roles('OPERATIONS_MANAGER', 'ADMIN')
-  voidCharge(@Param('id') id: string, @Request() req) {
+  voidCharge(@Param('id') id: string, @Request() req: any) {
     return this.guardChargesService.voidCharge(id, req.user.id);
   }
 

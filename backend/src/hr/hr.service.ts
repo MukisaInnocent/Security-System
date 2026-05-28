@@ -21,7 +21,7 @@ export class HrService {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
-        guardProfile: { include: { nextOfKins: true } },
+        guardProfile: { include: { nextOfKin: true } },
         deployments: { where: { status: 'COMPLETED' }, orderBy: { date: 'desc' }, take: 10 },
         leaveRequests: { orderBy: { createdAt: 'desc' }, take: 5 },
         chargesReceived: { orderBy: { createdAt: 'desc' }, take: 5 },
@@ -49,10 +49,10 @@ export class HrService {
     });
 
     if (Array.isArray(nextOfKin) && nextOfKin.length > 0) {
-      await this.prisma.nextOfKin.deleteMany({ where: { guardProfileId: profile.id } });
+      await this.prisma.nextOfKin.deleteMany({ where: { guardId: profile.id } });
       await this.prisma.nextOfKin.createMany({
         data: nextOfKin.map((nok: any) => ({
-          guardProfileId: profile.id,
+          guardId: profile.id,
           name: nok.name || 'Unknown',
           phone: nok.phone,
           relationship: nok.relationship,
@@ -64,7 +64,7 @@ export class HrService {
 
     return this.prisma.guardProfile.findUnique({
       where: { id: profile.id },
-      include: { nextOfKins: true },
+      include: { nextOfKin: true },
     });
   }
 
