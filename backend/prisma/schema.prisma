@@ -880,6 +880,11 @@ model GuardCharge {
   severityLevel     String // MINOR, MODERATE, SERIOUS
   status            String   @default("OPEN") // OPEN, UNDER_INVESTIGATION, DISCIPLINARY_ACTION_TAKEN, RESOLVED, DISMISSED
   statusNotes       String?
+  amount            Float    @default(0)
+  evidenceUrl       String?
+  guardConfirmed    Boolean  @default(false)
+  guardFingerprint  String?
+  operationsStatus  String   @default("PENDING") // PENDING, APPROVED, VOIDED
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

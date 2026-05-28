@@ -219,6 +219,20 @@ class ApiClient {
   async initiateDeploymentVoid(data: any) { return this.fetch('/spot-check/void', { method: 'POST', body: JSON.stringify(data) }); }
   async approveDeploymentVoid(id: string, approved: boolean, decisionNote?: string) { return this.fetch(`/spot-check/void/${id}/approve`, { method: 'PATCH', body: JSON.stringify({ approved, decisionNote }) }); }
 
+  // === OVERTIME ===
+  async getOvertimeRecords(filters?: Record<string, string>) {
+    const params = filters ? '?' + new URLSearchParams(filters).toString() : '';
+    return this.fetch(`/overtime${params}`);
+  }
+  async createOvertimeRecord(data: any) { return this.fetch('/overtime', { method: 'POST', body: JSON.stringify(data) }); }
+  async approveOvertime(id: string, approved: boolean, notes?: string) { return this.fetch(`/overtime/${id}/approve`, { method: 'PATCH', body: JSON.stringify({ approved, notes }) }); }
+
+  // === GUARD CHARGES ===
+  async getMyCharges() { return this.fetch('/guard-charges/my-charges'); }
+  async confirmCharge(id: string, pin: string) { return this.fetch(`/guard-charges/${id}/confirm`, { method: 'POST', body: JSON.stringify({ pin }) }); }
+  async voidCharge(id: string) { return this.fetch(`/guard-charges/${id}/void`, { method: 'POST' }); }
+  async updateChargeOpsStatus(id: string, status: string) { return this.fetch(`/guard-charges/${id}/operations-status`, { method: 'PATCH', body: JSON.stringify({ status }) }); }
+
   // === FOOD SUPPLIER ===
   async getFoodSupplierHeadcount(siteId: string) { return this.fetch(`/food-supplier/headcount?siteId=${siteId}`); }
   async verifyMeal(data: any) { return this.fetch('/food-supplier/verify', { method: 'POST', body: JSON.stringify(data) }); }

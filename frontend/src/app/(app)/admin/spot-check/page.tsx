@@ -18,7 +18,7 @@ export default function SpotCheckPage() {
   const [checking, setChecking] = useState<string | null>(null);
   const [showChargeModal, setShowChargeModal] = useState(false);
   const [selectedGuard, setSelectedGuard] = useState<any>(null);
-  const [chargeForm, setChargeForm] = useState({ chargeCategory: 'ABSENT', severityLevel: 'HIGH', chargeDescription: '' });
+  const [chargeForm, setChargeForm] = useState({ chargeCategory: 'ABSENT', severityLevel: 'HIGH', chargeDescription: '', amount: 0, evidenceUrl: '' });
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [manualPin, setManualPin] = useState('');
   const [manualNotes, setManualNotes] = useState('');
@@ -178,7 +178,7 @@ export default function SpotCheckPage() {
 
   const openChargeModal = (guard: any) => {
     setSelectedGuard(guard);
-    setChargeForm({ chargeCategory: 'ABSENT', severityLevel: 'HIGH', chargeDescription: '' });
+    setChargeForm({ chargeCategory: 'ABSENT', severityLevel: 'HIGH', chargeDescription: '', amount: 0, evidenceUrl: '' });
     setShowChargeModal(true);
   };
 
@@ -190,9 +190,11 @@ export default function SpotCheckPage() {
         chargeCategory: chargeForm.chargeCategory,
         severityLevel: chargeForm.severityLevel,
         chargeDescription: chargeForm.chargeDescription,
+        amount: chargeForm.amount,
+        evidenceUrl: chargeForm.evidenceUrl,
       });
       setShowChargeModal(false);
-      setChargeForm({ chargeCategory: 'ABSENT', severityLevel: 'HIGH', chargeDescription: '' });
+      setChargeForm({ chargeCategory: 'ABSENT', severityLevel: 'HIGH', chargeDescription: '', amount: 0, evidenceUrl: '' });
       showMsg('success', `Charge raised against ${selectedGuard.name}`);
       loadCharges();
     } catch (err: any) {
@@ -423,6 +425,16 @@ export default function SpotCheckPage() {
                 <select className="input" value={chargeForm.severityLevel} onChange={(e) => setChargeForm((current) => ({ ...current, severityLevel: e.target.value }))}>
                   {severityLevels.map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label className="label">Penalty Amount (UGX)</label>
+                  <input type="number" className="input" value={chargeForm.amount} onChange={(e) => setChargeForm((current) => ({ ...current, amount: Number(e.target.value) }))} />
+                </div>
+                <div>
+                  <label className="label">Evidence File URL (Optional)</label>
+                  <input type="text" className="input" placeholder="https://..." value={chargeForm.evidenceUrl} onChange={(e) => setChargeForm((current) => ({ ...current, evidenceUrl: e.target.value }))} />
+                </div>
               </div>
               <div>
                 <label className="label">Description</label>

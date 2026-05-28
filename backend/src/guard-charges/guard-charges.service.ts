@@ -25,6 +25,13 @@ export class GuardChargesService {
     });
   }
 
+  async updateOperationsStatus(chargeId: string, status: string) {
+    return this.prisma.guardCharge.update({
+      where: { id: chargeId },
+      data: { operationsStatus: status },
+    });
+  }
+
   async getChargesForGuard(guardId: string) {
     return this.prisma.guardCharge.findMany({
       where: { guardId },
@@ -70,7 +77,7 @@ export class GuardChargesService {
 
     return this.prisma.guardCharge.update({
       where: { id: chargeId },
-      data: { status: 'VOIDED' },
+      data: { status: 'VOIDED', operationsStatus: 'VOIDED' },
     });
   }
 }

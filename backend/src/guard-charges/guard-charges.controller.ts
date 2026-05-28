@@ -38,4 +38,10 @@ export class GuardChargesController {
   voidCharge(@Param('id') id: string, @Request() req) {
     return this.guardChargesService.voidCharge(id, req.user.id);
   }
+
+  @Patch(':id/operations-status')
+  @Roles('OPERATIONS_MANAGER', 'ADMIN')
+  updateOperationsStatus(@Param('id') id: string, @Body('status') status: string) {
+    return this.guardChargesService.updateOperationsStatus(id, status);
+  }
 }

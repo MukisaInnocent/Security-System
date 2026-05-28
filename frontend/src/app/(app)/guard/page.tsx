@@ -28,6 +28,12 @@ export default function GuardPage() {
   const [leaveForm, setLeaveForm] = useState({ leaveType: 'ANNUAL', startDate: '', endDate: '', reason: '' });
   const [submittingLeave, setSubmittingLeave] = useState(false);
 
+  const [charges, setCharges] = useState<any[]>([]);
+  const [showChargeConfirm, setShowChargeConfirm] = useState(false);
+  const [selectedCharge, setSelectedCharge] = useState<any>(null);
+  const [pin, setPin] = useState('');
+  const [confirmingCharge, setConfirmingCharge] = useState(false);
+
   const showMsg = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 4000);
@@ -35,6 +41,7 @@ export default function GuardPage() {
 
   const load = () => {
     api.getGuardDashboard().then(setDashData).catch(console.error).finally(() => setLoading(false));
+    api.getMyCharges().then(setCharges).catch(console.error);
   };
 
   useEffect(() => {
@@ -140,7 +147,7 @@ export default function GuardPage() {
 
       {/* Navigation Tabs */}
       <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.03)', padding: '0.25rem', borderRadius: 'var(--radius-md)' }}>
-        {['DUTY', 'LEAVE', 'PAYROLL', 'SPECIAL'].map(tab => (
+        {['DUTY', 'LEAVE', 'PAYROLL', 'SPECIAL', 'CHARGES'].map(tab => (
           <button 
             key={tab}
             className={`btn btn-sm ${activeTab === tab ? 'btn-primary' : 'btn-ghost'}`}
@@ -358,6 +365,82 @@ export default function GuardPage() {
         </div>
       )}
 
+      {activeTab === 'CHARGES' && (
+        <div className="fade-in">
+          <h3 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '1rem' }}>Disciplinary Charges</h3>
+          {charges.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {charges.map((charge: any) => (
+                <div key={charge.id} className="card" style={{ padding: '0.75rem 1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{charge.chargeCategory}</div>
+                    <span className={`badge ${charge.status === 'PENDING' ? 'badge-warning' : charge.status === 'VOIDED' ? 'badge-neutral' : 'badge-danger'}`}>{charge.status}</span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                    {new Date(charge.createdAt).toLocaleDateString()} — {charge.severityLevel} Severity
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                    {charge.chargeDescription}
+                  </div>
+                  {charge.amount > 0 && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--danger)', fontWeight: 600, marginBottom: '0.5rem' }}>
+                      Penalty: UGX {charge.amount.toLocaleString()}
+                    </div>
+                  )}
+                  {charge.status === 'PENDING' && (
+                    <button className="btn btn-outline btn-sm" style={{ width: '100%' }} onClick={() => { setSelectedCharge(charge); setShowChargeConfirm(true); }}>
+                      <Fingerprint size={13} style={{ marginRight: '0.3rem', display: 'inline' }} /> Confirm / Accept
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+              <ShieldAlert size={32} color="var(--success)" style={{ margin: '0 auto 0.5rem' }} />
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>You have no disciplinary charges</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Charge Confirm Modal */}
+      {showChargeConfirm && (
+        <div className="modal-backdrop" onClick={() => setShowChargeConfirm(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+              <Fingerprint size={18} color="var(--accent-light)" /> Confirm Charge
+            </h2>
+            <div style={{ marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              By confirming, you acknowledge the charge for <strong>{selectedCharge?.chargeCategory}</strong>. Please provide your PIN/Fingerprint to sign.
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label className="label">Enter PIN</label>
+              <input type="password" placeholder="****" className="input" value={pin} onChange={(e) => setPin(e.target.value)} />
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="btn btn-primary" style={{ flex: 1 }} disabled={confirmingCharge || !pin}
+                onClick={async () => {
+                  setConfirmingCharge(true);
+                  try {
+                    await api.confirmCharge(selectedCharge.id, pin);
+                    showMsg('success', 'Charge confirmed successfully');
+                    setShowChargeConfirm(false);
+                    setPin('');
+                    load();
+                  } catch (err: any) {
+                    showMsg('error', err.message);
+                  } finally {
+                    setConfirmingCharge(false);
+                  }
+                }}>
+                {confirmingCharge ? 'Confirming...' : 'Sign'}
+              </button>
+              <button className="btn btn-outline" onClick={() => setShowChargeConfirm(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Incident Modal */}
       {showIncidentModal && (

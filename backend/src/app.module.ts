@@ -29,6 +29,7 @@ import { ReportsModule } from './reports/reports.module';
 import { ChangeSheetsModule } from './change-sheets/change-sheets.module';
 import { PersonnelMovementsModule } from './personnel-movements/personnel-movements.module';
 import { GuardChargesModule } from './guard-charges/guard-charges.module';
+import { OvertimeModule } from './overtime/overtime.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { GuardChargesModule } from './guard-charges/guard-charges.module';
     ChangeSheetsModule,
     PersonnelMovementsModule,
     GuardChargesModule,
+    OvertimeModule,
   ],
 })
 export class AppModule implements NestModule {

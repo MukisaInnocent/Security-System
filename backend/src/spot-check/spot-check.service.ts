@@ -109,6 +109,8 @@ export class SpotCheckService {
         chargeCategory: data.chargeCategory || data.type || 'DISCIPLINARY',
         chargeDescription: data.chargeDescription || data.description,
         severityLevel: data.severityLevel || data.severity || 'MEDIUM',
+        amount: data.amount ? parseFloat(data.amount.toString()) : 0,
+        evidenceUrl: data.evidenceUrl || undefined,
       },
       include: { guard: { select: { id: true, name: true } }, raisedBy: { select: { name: true } } },
     });

@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { UserCheck, ArrowLeft, Save, Briefcase, Contact, CreditCard, Plus, Trash2, ShieldCheck, Lock } from 'lucide-react';
+import { UserCheck, ArrowLeft, Save, Briefcase, Contact, CreditCard, Plus, Trash2, ShieldCheck, Lock, MapPin } from 'lucide-react';
 import Link from 'next/link';
 
-const emptyContact = { name: '', phone: '', relationship: '', type: 'EMERGENCY' };
+const emptyContact = { name: '', phone: '', relationship: '', nin: '', village: '', parish: '', subCounty: '', county: '', district: '' };
 
 export default function GuardProfilePage() {
   const params = useParams();
@@ -27,6 +27,12 @@ export default function GuardProfilePage() {
     leaveBalance: 21,
     isPermanent: false,
     weaponAuthorised: false,
+    nin: '',
+    village: '',
+    parish: '',
+    subCounty: '',
+    county: '',
+    district: '',
     references: '',
     paymentMode: 'CASH',
     bankName: '',
@@ -52,15 +58,7 @@ export default function GuardProfilePage() {
       let refs = '';
       try { if (p.references) refs = JSON.parse(p.references).map((r: any) => `${r.name} (${r.phone} - ${r.relationship})`).join('\n'); } catch (e) {}
 
-      let parsedContacts: any[] = [];
-      if (typeof data.emergencyContact === 'string') {
-        try {
-          const parsed = JSON.parse(data.emergencyContact);
-          parsedContacts = Array.isArray(parsed) ? parsed : [parsed];
-        } catch (e) {
-          parsedContacts = [];
-        }
-      }
+      let parsedContacts = p.nextOfKins || [];
 
       setEmergencyContacts(parsedContacts.length > 0 ? parsedContacts : [emptyContact]);
       setForm({
@@ -69,6 +67,12 @@ export default function GuardProfilePage() {
         leaveBalance: p.leaveBalance || 21,
         isPermanent: !!p.isPermanent,
         weaponAuthorised: !!p.weaponAuthorised,
+        nin: p.nin || '',
+        village: p.village || '',
+        parish: p.parish || '',
+        subCounty: p.subCounty || '',
+        county: p.county || '',
+        district: p.district || '',
         references: refs,
         paymentMode: p.paymentMode || 'CASH',
         bankName: bank.bankName || '',
@@ -87,6 +91,10 @@ export default function GuardProfilePage() {
   };
 
   const addContact = () => {
+    if (emergencyContacts.length >= 3) {
+      setMsg('You can only add up to 3 Next of Kin.');
+      return;
+    }
     setEmergencyContacts((current) => [...current, { ...emptyContact }]);
   };
 
@@ -116,7 +124,13 @@ export default function GuardProfilePage() {
         leaveBalance: form.leaveBalance,
         isPermanent: form.isPermanent,
         weaponAuthorised: form.weaponAuthorised,
-        nextOfKin: JSON.stringify(emergencyContacts.filter((contact) => contact.name || contact.phone || contact.relationship)),
+        nin: form.nin,
+        village: form.village,
+        parish: form.parish,
+        subCounty: form.subCounty,
+        county: form.county,
+        district: form.district,
+        nextOfKin: emergencyContacts.filter((contact) => contact.name || contact.phone || contact.relationship),
         references,
         paymentMode: form.paymentMode,
         bankDetails,
@@ -150,7 +164,7 @@ export default function GuardProfilePage() {
 
       {msg && <div className={`message ${msg.startsWith('✅') ? 'message-success' : 'message-error'}`} onClick={() => setMsg('')}>{msg}</div>}
 
-      <form onSubmit={handleSave} className="grid-2">
+      <form onSubmit={handleSave} className="grid-2" style={{ gap: '1.5rem' }}>
         <div className="card">
           <h3 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Briefcase size={16} /> Employment Details
@@ -190,47 +204,108 @@ export default function GuardProfilePage() {
         </div>
 
         <div className="card">
+          <h3 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <MapPin size={16} /> Guard Address & Identifiers
+          </h3>
+          <div style={{ marginBottom: '1rem' }}>
+            <label className="label">National ID Number (NIN)</label>
+            <input className="input" value={form.nin} onChange={(e) => setForm((current) => ({ ...current, nin: e.target.value }))} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div>
+              <label className="label">District</label>
+              <input className="input" value={form.district} onChange={(e) => setForm((current) => ({ ...current, district: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">County</label>
+              <input className="input" value={form.county} onChange={(e) => setForm((current) => ({ ...current, county: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Sub County</label>
+              <input className="input" value={form.subCounty} onChange={(e) => setForm((current) => ({ ...current, subCounty: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Parish</label>
+              <input className="input" value={form.parish} onChange={(e) => setForm((current) => ({ ...current, parish: e.target.value }))} />
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label className="label">Village</label>
+              <input className="input" value={form.village} onChange={(e) => setForm((current) => ({ ...current, village: e.target.value }))} />
+            </div>
+          </div>
+        </div>
+
+        <div className="card" style={{ gridColumn: '1 / -1' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Contact size={16} /> Emergency Contacts
+            <h3 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
+              <Contact size={16} /> Next of Kin (Max 3)
             </h3>
-            <button type="button" className="btn btn-outline btn-sm" onClick={addContact}>
-              <Plus size={13} /> Add Contact
+            <button type="button" className="btn btn-outline btn-sm" onClick={addContact} disabled={emergencyContacts.length >= 3}>
+              <Plus size={13} /> Add Next of Kin
             </button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
             {emergencyContacts.map((contact, index) => (
-              <div key={index} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '0.75rem', background: 'rgba(255,255,255,0.02)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 700 }}>Contact {index + 1}</div>
+              <div key={index} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '1rem', background: 'rgba(255,255,255,0.02)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 700 }}>Next of Kin {index + 1}</div>
                   {emergencyContacts.length > 1 && (
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => removeContact(index)}>
-                      <Trash2 size={12} />
+                    <button type="button" className="btn btn-ghost btn-sm text-danger" onClick={() => removeContact(index)}>
+                      <Trash2 size={14} /> Remove
                     </button>
                   )}
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
                   <div>
                     <label className="label">Name</label>
-                    <input className="input" placeholder="Contact name" value={contact.name} onChange={(e) => updateContact(index, 'name', e.target.value)} />
+                    <input className="input" placeholder="Full name" value={contact.name} onChange={(e) => updateContact(index, 'name', e.target.value)} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <div>
+                      <label className="label">Relationship</label>
+                      <input className="input" placeholder="E.g., Spouse" value={contact.relationship} onChange={(e) => updateContact(index, 'relationship', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="label">Phone</label>
+                      <input className="input" placeholder="Phone Number" value={contact.phone} onChange={(e) => updateContact(index, 'phone', e.target.value)} />
+                    </div>
                   </div>
                   <div>
-                    <label className="label">Relationship</label>
-                    <input className="input" placeholder="Spouse / Parent" value={contact.relationship} onChange={(e) => updateContact(index, 'relationship', e.target.value)} />
+                    <label className="label">National ID (NIN)</label>
+                    <input className="input" placeholder="NIN" value={contact.nin} onChange={(e) => updateContact(index, 'nin', e.target.value)} />
                   </div>
-                </div>
-                <div>
-                  <label className="label">Phone Number</label>
-                  <input className="input" placeholder="0700000000" value={contact.phone} onChange={(e) => updateContact(index, 'phone', e.target.value)} />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <div>
+                      <label className="label">District</label>
+                      <input className="input" placeholder="District" value={contact.district} onChange={(e) => updateContact(index, 'district', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="label">County</label>
+                      <input className="input" placeholder="County" value={contact.county} onChange={(e) => updateContact(index, 'county', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="label">Sub County</label>
+                      <input className="input" placeholder="Sub County" value={contact.subCounty} onChange={(e) => updateContact(index, 'subCounty', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="label">Parish</label>
+                      <input className="input" placeholder="Parish" value={contact.parish} onChange={(e) => updateContact(index, 'parish', e.target.value)} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="label">Village</label>
+                    <input className="input" placeholder="Village" value={contact.village} onChange={(e) => updateContact(index, 'village', e.target.value)} />
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div style={{ marginTop: '1rem' }}>
-            <div style={{ marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>References (one per line)</div>
-            <textarea className="input" rows={4} placeholder="John Doe (077XXXX - Uncle)" value={form.references} onChange={(e) => setForm((current) => ({ ...current, references: e.target.value }))} />
+          <div style={{ marginTop: '1.5rem' }}>
+            <div style={{ marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Other References (one per line)</div>
+            <textarea className="input" rows={3} placeholder="John Doe (077XXXX - Uncle)" value={form.references} onChange={(e) => setForm((current) => ({ ...current, references: e.target.value }))} />
           </div>
         </div>
 
